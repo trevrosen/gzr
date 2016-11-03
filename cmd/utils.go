@@ -8,12 +8,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// GozerConfig represents the configuration for a Gozer-managed pod
 type GozerConfig struct {
 	ApiVersion  string `yaml:"apiVersion"`
 	Deployments []Deployment
 	Services    []Service
 }
 
+// Deployment represents a member of the deployments array in a Gozer config file
 type Deployment struct {
 	Name         string
 	DefaultImage string   `yaml:"default-image"`
@@ -21,6 +23,7 @@ type Deployment struct {
 	BuildSteps   []string `yaml:"build-steps"`
 }
 
+// Service represents a member of the services array in a Gozer config file
 type Service struct {
 	Name         string
 	ExternalPort int `yaml:"externalPort"`
@@ -30,6 +33,7 @@ type Service struct {
 	Params       map[string]interface{}
 }
 
+// er prints an error message and exits. Lifted from Cobra source.
 func er(msg interface{}) {
 	fmt.Println("Error:", msg)
 	os.Exit(-1)
@@ -49,6 +53,7 @@ func kubeCtlExists() bool {
 	return false
 }
 
+// gozerConfigFromFile parses the config file in the $PWD
 func gozerConfigFromFile() GozerConfig {
 	var err error
 	cwd, _ := os.Getwd()
