@@ -62,16 +62,3 @@ func initConfig() {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
 }
-
-//
-// Helpers
-//
-func er(msg interface{}) {
-	fmt.Println("Error:", msg)
-	os.Exit(-1)
-}
-
-// notify sends a formatted information line to stdout
-func notify(msg string) {
-	fmt.Printf("[-] %s\n", msg)
-}
