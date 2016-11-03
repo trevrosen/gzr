@@ -10,8 +10,8 @@ import (
 
 // serviceCmd represents the service command
 var serviceCmd = &cobra.Command{
-	Use:   "service",
-	Short: "A brief description of your command",
+	Use:   "service [ACTION] [SERVICE NAME]",
+	Short: "manage Bypass services in containers",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 

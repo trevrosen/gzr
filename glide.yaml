@@ -1,0 +1,6 @@
+package: github.com/bypasslane/gzr
+import:
+- package: github.com/spf13/cobra
+- package: github.com/spf13/viper
+- package: github.com/kubernetes/client-go
+  version: ^1.5.0
