@@ -26,24 +26,17 @@ func EstablishK8sConnection(kubeconfig string) error {
 	}
 
 	for _, deployment := range deploymentList.Items {
-		var displayLabel string
 
 		// Deployments either have an app or run label so far. I'm not sure how they get one vs the other.
 		// -- The hello-minikube deploy is the "run" one
 		// -- The nginx deploy is the "app" one
-		labels := deployment.Spec.Template.Labels
-		run := labels["run"]
-		app := labels["app"]
 
-		if app == "" {
-			displayLabel = run
-		} else {
-			displayLabel = app
+		fmt.Printf("Deployment: %s\n", deployment.ObjectMeta.Name)
+		fmt.Printf("- Container information:\n")
+		for _, container := range deployment.Spec.Template.Spec.Containers {
+			fmt.Printf("-- name: %s\n", container.Name)
+			fmt.Printf("-- image: %s\n", container.Image)
 		}
-
-		fmt.Printf("Deployment: %s\n", displayLabel)
-		fmt.Printf("-- selector: %s\n", deployment.Spec.Selector)
-
 	}
 
 	return err
