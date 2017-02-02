@@ -87,6 +87,7 @@ func (d GzrDeployment) cliTemplate() *template.Template {
 	t := template.New("Deployment CLI")
 	t, _ = t.Parse(`-------------------------
 Deployment: {{.ObjectMeta.Name}}
+  - replicas: {{.Spec.Replicas}}
   - containers: {{range .Spec.Template.Spec.Containers}}
     --name:  {{.Name}}
     --image: {{.Image}}
