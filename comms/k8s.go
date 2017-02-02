@@ -23,8 +23,10 @@ type Serializer interface {
 
 // K8sCommunicator defines an interface for retrieving data from a k8s cluster
 type K8sCommunicator interface {
-	// Deployments returns the list of Deployments in the cluster
-	Deployments() ([]v1beta1.Deployment, error)
+	// ListDeployments returns the list of Deployments in the cluster
+	ListDeployments() ([]GzrDeployment, error)
+	// GetDeployment returns the Deployment matching the given name
+	GetDeployment(string) (GzrDeployment, error)
 }
 
 // K8sConnection implements the K8sCommunicator interface and holds a live connection to a k8s cluster
@@ -57,13 +59,21 @@ func NewK8sConnection() (*K8sConnection, error) {
 	return k, nil
 }
 
-// DeploymentByName returns a k8s v1.Deployment
-//func (k *K8sConnection) DeploymentByName(name string) *v1.Deployment {
+// GetDeployment returns a GzrDeployment matching the name
+func (k *K8sConnection) GetDeployment(namespace string, deploymentName string) (*GzrDeployment, error) {
+	var gd *GzrDeployment
+	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(namespace).Get(deploymentName)
+	if err != nil {
+		return gd, err
+	}
+	gdp := GzrDeployment(*deployment)
+	gd = &gdp
 
-//}
+	return gd, err
+}
 
-// Deployments returns the active k8s Deployments
-func (k *K8sConnection) Deployments(namespace string) ([]GzrDeployment, error) {
+// ListDeployments returns the active k8s Deployments for the given namespace
+func (k *K8sConnection) ListDeployments(namespace string) ([]GzrDeployment, error) {
 	var deployments []GzrDeployment
 	deploymentList, err := k.clientset.ExtensionsV1beta1().Deployments(namespace).List(v1.ListOptions{})
 	if err != nil {
