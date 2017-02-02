@@ -8,6 +8,9 @@ build:
 clean:
 	rm gzr
 
+run:
+	go build -o gzr && ./gzr
+
 test:
 	go test -v ./..
 
