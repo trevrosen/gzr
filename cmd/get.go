@@ -15,12 +15,16 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/bypasslane/gzr/comms"
 	"github.com/spf13/cobra"
 )
+
+// Global connection used by this command
+var k8sConn *comms.K8sConnection
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
@@ -29,21 +33,35 @@ var getCmd = &cobra.Command{
 	Long: `Works similarly to kubectl get but with more opinionated output:
 
 gzr get deployments`,
-	Run: func(cmd *cobra.Command, args []string) {
-		k8sConn, err := comms.NewK8sConnection()
-		if err != nil {
+	PreRun: func(cmd *cobra.Command, args []string) {
+		var connErr error
+		k8sConn, connErr = comms.NewK8sConnection()
+		if connErr != nil {
 			// TODO: figure out the Cobra way to handle this
-			log.Fatalln(err)
+			fmt.Println("Error establishing k8s connection: ", connErr)
+			os.Exit(1)
 		}
+	},
 
-		// TODO: take in namespace from flag
-		activeDeployments, err := k8sConn.Deployments("default")
-		if err != nil {
-			log.Fatalln("Error retrieving Deployments: %s", err)
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			// TODO: make this use Cobra usage message
+			fmt.Println("Resource type can't be blank")
+			os.Exit(1)
 		}
-		for _, deployment := range activeDeployments {
-			deployment.SerializeForCLI(os.Stdout)
-		}
+		switch args[0] {
+		case "deployments":
+			// TODO: allow getting a single Deployment by name
+			// TODO: take in namespace from flag
+			activeDeployments, err := k8sConn.Deployments("default")
+			if err != nil {
+				log.Fatalln("Error retrieving Deployments: %s", err)
+			}
+			for _, deployment := range activeDeployments {
+				deployment.SerializeForCLI(os.Stdout)
+			}
+		} // end switch
+
 	},
 }
 
