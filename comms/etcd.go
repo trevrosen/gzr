@@ -5,23 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/coreos/etcd/client"
+	"github.com/coreos/etcd/clientv3"
 	"github.com/spf13/viper"
 )
 
-func createClient() (client.KeysAPI, error) {
+func createClient() (*clientv3.Client, error) {
 	cxnString := fmt.Sprintf("%s:%s", viper.GetString("datastore.host"), viper.GetString("datastore.port"))
-	cfg := client.Config{
+	cli, err := clientv3.New(clientv3.Config{
 		Endpoints: []string{cxnString},
-		Transport: client.DefaultTransport,
-	}
-
-	c, err := client.New(cfg)
+	})
 	if err != nil {
 		return nil, err
 	}
-	kAPI := client.NewKeysAPI(c)
-	return kAPI, nil
+	return cli, nil
+
 }
 
 func storeEtcd(imageId string, imageMetadata ImageMetadata) error {
@@ -29,32 +26,63 @@ func storeEtcd(imageId string, imageMetadata ImageMetadata) error {
 	if err != nil {
 		return err
 	}
-	kAPI, err := createClient()
-	if err != nil {
-		return err
-	}
-	_, err = kAPI.Create(context.Background(), fmt.Sprintf("/%s", imageId), string(data))
+
+	etcdClient, err := createClient()
+	defer etcdClient.Close()
+
+	kv := clientv3.NewKV(etcdClient)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Storing in etcd")
+	resp, err := kv.Put(context.Background(), fmt.Sprintf("/%s", imageId), string(data))
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(resp)
 	return nil
+
 }
 
-// func deleteEtcd(imageId string) error {
-// 	_, err = kAPI.Delete(context.Background(), "/foo", &client.DeleteOptions{PrevValue: "bar"})
-// 	if err != nil {
-// 		// handle error
-// 	}
-//      return err
-// }
+func getEtcd(imageId string) (string, error) {
+	etcdClient, err := createClient()
+	defer etcdClient.Close()
 
-// func getEtcd(imageId string) error {
-// 	val, err := kAPI.Get(context.Background(), "/foo", &client.GetOptions{Recursive: true, Sort: false})
-// 	if err != nil {
-// 		// handle error
-// 	}
-// 	fmt.Printf("%+v\n", val)
-// 	return err
-// }
+	kv := clientv3.NewKV(etcdClient)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := kv.Get(context.Background(), fmt.Sprintf("/%s", imageId))
+	if err != nil {
+		return "", err
+	}
+	val, err := extractVal(resp)
+	return val, err
+}
+
+func extractVal(resp *clientv3.GetResponse) (string, error) {
+	if resp.Count > 1 {
+		return "", fmt.Errorf("Error in retrieving information")
+	}
+
+	kv := resp.Kvs[0]
+	return string(kv.Value), nil
+}
+
+func deleteEtcd(imageId string) error {
+	etcdClient, err := createClient()
+	defer etcdClient.Close()
+
+	kv := clientv3.NewKV(etcdClient)
+	if err != nil {
+		return err
+	}
+
+	_, err = kv.Delete(context.Background(), fmt.Sprintf("/%s", imageId))
+	if err != nil {
+		return err
+	}
+	return err
+}
