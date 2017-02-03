@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-
-	"github.com/spf13/viper"
 )
+
+// ImageStorer
+type ImageStorageInterface interface {
+	StoreImage(string, string)
+}
 
 type ImageMetadata struct {
 	GitCommit     string `json:"git-commit"`
@@ -16,13 +19,14 @@ type ImageMetadata struct {
 	CreatedAt     string `json:"created-at"`
 }
 
-func StoreImage(args []string) {
-	file, err := ioutil.ReadFile(args[1])
+type EtcdImageStorer struct{}
+
+func (storer *EtcdImageStorer) StoreImage(imageId string, dataPath string) {
+	file, err := ioutil.ReadFile(dataPath)
 	if err != nil {
 		fmt.Println("Could not read metadata file")
 		os.Exit(1)
 	}
-	fmt.Printf("%s\n", string(file))
 
 	var meta ImageMetadata
 	err = json.Unmarshal(file, &meta)
@@ -30,17 +34,10 @@ func StoreImage(args []string) {
 		fmt.Println("Could not read metadata file")
 		os.Exit(1)
 	}
-	fmt.Printf("Results: %v\n", meta)
 
-	switch viper.GetString("datastore.type") {
-	case "etcd":
-		err = storeEtcd(args[0], meta)
-	default:
-		err = fmt.Errorf("%s is not a valid datastore type", viper.GetString("datastore.type"))
-	}
+	err = storeEtcd(imageId, meta)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 }
