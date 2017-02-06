@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/bypasslane/gzr/comms"
+	"github.com/bypasslane/gzr/middleware"
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 )
@@ -16,6 +17,7 @@ func App(k8sConn *comms.K8sConnection) http.Handler {
 	router.HandleFunc("/deployments/{name}", getDeploymentHandler(k8sConn)).Methods("GET")
 	router.HandleFunc("/deployments/{name}", updateDeploymentHandler(k8sConn)).Methods("PUT")
 	n := negroni.Classic()
+	n.Use(middleware.NewContentType()) // Ensure response Content-Type header is always "application/json"
 	n.UseHandler(router)
 	return n
 }
