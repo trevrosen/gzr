@@ -19,7 +19,6 @@ func createClient() (*clientv3.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	clientv3.SetLogger(clientv3.GetLogger())
 	return cli, nil
 }
 
@@ -85,7 +84,7 @@ func extractVal(resp *clientv3.GetResponse) ([]Image, error) {
 	for _, kv := range resp.Kvs {
 		var meta ImageMetadata
 		json.Unmarshal(kv.Value, &meta) // TODO: Handle error
-		images = append(images, Image{ImageID: string(kv.Key), ImageMeta: meta})
+		images = append(images, Image{ImageName: string(kv.Key), ImageMeta: meta})
 	}
 	return images, nil
 }

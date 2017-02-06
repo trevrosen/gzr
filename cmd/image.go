@@ -1,5 +1,5 @@
-// Store is the main command for handing gzr relevant data to inform it about
-// infrastructure and artifacts that cannot be discovered automatically
+// Image is the main command for handing gzr relevant data to inform it about
+// image artifacts that cannot be discovered automatically
 
 package cmd
 
@@ -22,11 +22,14 @@ var imageCmd = &cobra.Command{
 }
 
 var storeCmd = &cobra.Command{
-	Use:   "store IMAGE_NAME METADATA_PATH",
+	Use:   "store IMAGE_NAME:VERSION METADATA_PATH",
 	Short: "Store metadata about an image for gzr to track",
+	Long: `Used to store metadata about an image for gzr to track. The name must be formatted as NAME:VERSION.
+Repeated store calls with the same VERSION on the same day will only keep the newest, but different days will be stored.
+In short, only one version per day is allowed.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 {
-			fmt.Println("Must provide IMAGE_NAME and METADATA_PATH")
+			fmt.Println("Must provide IMAGE_NAME:VERSION and METADATA_PATH")
 			os.Exit(1)
 		}
 		var storer comms.ImageStorageInterface
@@ -59,7 +62,7 @@ var getCmd = &cobra.Command{
 		} else {
 			storer = registeredStore
 		}
-		images, err := storer.GetImage(args[0])
+		images, err := storer.GetImages(args[0])
 		if err != nil {
 			fmt.Printf("Error: %s", err.Error())
 			os.Exit(1)
