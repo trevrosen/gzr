@@ -4,12 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 )
 
 // ImageStorer
 type ImageStorageInterface interface {
-	StoreImage(string, string)
+	StoreImage(string, string) error
+	GetImage(string) ([]Image, error)
+}
+
+type Image struct {
+	ImageID   string        `json:"image_id"`
+	ImageMeta ImageMetadata `json:"image_metadata"`
 }
 
 type ImageMetadata struct {
@@ -21,23 +26,29 @@ type ImageMetadata struct {
 
 type EtcdImageStorer struct{}
 
-func (storer *EtcdImageStorer) StoreImage(imageId string, dataPath string) {
+func (storer *EtcdImageStorer) GetImage(imageName string) ([]Image, error) {
+	images, err := getEtcd(imageName)
+	if err != nil {
+		return []Image{}, err
+	}
+	return images, nil
+}
+
+func (storer *EtcdImageStorer) StoreImage(imageName string, dataPath string) error {
 	file, err := ioutil.ReadFile(dataPath)
 	if err != nil {
-		fmt.Println("Could not read metadata file")
-		os.Exit(1)
+		return fmt.Errorf("Could not read metadata file")
 	}
 
 	var meta ImageMetadata
 	err = json.Unmarshal(file, &meta)
 	if err != nil {
-		fmt.Println("Could not read metadata file")
-		os.Exit(1)
+		return fmt.Errorf("Could not read metadata file")
 	}
 
-	err = storeEtcd(imageId, meta)
+	err = storeEtcd(imageName, meta)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return fmt.Errorf(err.Error())
 	}
+	return nil
 }
