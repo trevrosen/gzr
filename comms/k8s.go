@@ -103,7 +103,7 @@ func (k *K8sConnection) GetDeployment(namespace string, deploymentName string) (
 // UpdateDeployment updates a Deployment on the server to the structure represented by the argument
 // TODO: verify that requested image exists in the store
 // TODO: verify that requested image exists in the registry
-func (k *K8sConnection) UpdateDeployment(dci DeploymentContainerInfo) (*GzrDeployment, error) {
+func (k *K8sConnection) UpdateDeployment(dci *DeploymentContainerInfo) (*GzrDeployment, error) {
 	var gd *GzrDeployment
 	var containerIndex int
 	found := false

@@ -53,7 +53,7 @@ deployments update <DEPLOYMENT_NAME> <CONTAINER_NAME> <IMAGE>
 
 // updateDeployment updates a Deployment container with the info described by the DeploymentContainerInfo argument
 func updateDeployment(namespace string, deploymentName string, containerName string, image string) {
-	dci := comms.DeploymentContainerInfo{
+	dci := &comms.DeploymentContainerInfo{
 		Namespace:      namespace,
 		DeploymentName: deploymentName,
 		ContainerName:  containerName,

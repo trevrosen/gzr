@@ -14,6 +14,7 @@ func App(k8sConn *comms.K8sConnection) http.Handler {
 	router.HandleFunc("/", homeHandler).Methods("GET")
 	router.HandleFunc("/deployments", listDeploymentsHandler(k8sConn)).Methods("GET")
 	router.HandleFunc("/deployments/{name}", getDeploymentHandler(k8sConn)).Methods("GET")
+	router.HandleFunc("/deployments/{name}", updateDeploymentHandler(k8sConn)).Methods("PUT")
 	n := negroni.Classic()
 	n.UseHandler(router)
 	return n
