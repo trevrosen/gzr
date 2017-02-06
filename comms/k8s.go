@@ -1,6 +1,7 @@
 package comms
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -19,6 +20,11 @@ var (
 
 // GzrDeployment is just here to let us declare methods on k8s Deployments
 type GzrDeployment v1beta1.Deployment
+
+// GzrDeploymentList is a collection of GzrDeployments
+type GzrDeploymentList struct {
+	Deployments []GzrDeployment `json:"deployments"`
+}
 
 // Serializer knows how to serialize for web (JSON) and CLI (templatized strings)
 type Serializer interface {
@@ -52,12 +58,14 @@ type K8sCommunicator interface {
 type K8sConnection struct {
 	// clientset is a collection of Kubernetes API clients
 	clientset *kubernetes.Clientset
+	// Namespace is the k8s namespace active for this connection used to talk
+	Namespace string
 }
 
 // NewK8sConnection returns a K8sConnection with an active v1.Clientset.
 //   - assumes that $HOME/.kube/config contains a legit Kubernetes config for an healthy k8s cluster.
 //   - panics if the configuration can't be used to connect to a k8s cluster.
-func NewK8sConnection() (*K8sConnection, error) {
+func NewK8sConnection(namespace string) (*K8sConnection, error) {
 	var k *K8sConnection
 	kubeconfig := fmt.Sprintf("%s/.kube/config", os.Getenv("HOME"))
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
@@ -73,6 +81,7 @@ func NewK8sConnection() (*K8sConnection, error) {
 
 	k = &K8sConnection{
 		clientset: clientset,
+		Namespace: namespace,
 	}
 
 	return k, nil
@@ -125,18 +134,18 @@ func (k *K8sConnection) UpdateDeployment(dci DeploymentContainerInfo) (*GzrDeplo
 }
 
 // ListDeployments returns the active k8s Deployments for the given namespace
-func (k *K8sConnection) ListDeployments(namespace string) ([]GzrDeployment, error) {
-	var deployments []GzrDeployment
+func (k *K8sConnection) ListDeployments(namespace string) (*GzrDeploymentList, error) {
+	var gzrDeploymentList GzrDeploymentList
 	deploymentList, err := k.clientset.ExtensionsV1beta1().Deployments(namespace).List(v1.ListOptions{})
 	if err != nil {
-		return deployments, err
+		return &gzrDeploymentList, err
 	}
 
 	for _, deployment := range deploymentList.Items {
-		deployments = append(deployments, GzrDeployment(deployment))
+		gzrDeploymentList.Deployments = append(gzrDeploymentList.Deployments, GzrDeployment(deployment))
 	}
 
-	return deployments, nil
+	return &gzrDeploymentList, nil
 }
 
 // SerializeForCLI takes an io.Writer and writes templatized data to it representing a Deployment
@@ -156,4 +165,14 @@ Deployment: {{.ObjectMeta.Name}}
 {{end}}
 `)
 	return t
+}
+
+// SerializeForWire returns a JSON representation of the Deployment
+func (d GzrDeployment) SerializeForWire() ([]byte, error) {
+	return json.Marshal(d)
+}
+
+// SerializeForWire returns a JSON representation of the DeploymentList
+func (dl *GzrDeploymentList) SerializeForWire() ([]byte, error) {
+	return json.Marshal(dl)
 }

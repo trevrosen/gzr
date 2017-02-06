@@ -12,9 +12,6 @@ import (
 // Package-global k8s connection
 var k8sConn *comms.K8sConnection
 
-// Flag var for holding namespace info
-var namespace string
-
 // deploymentsCmd represents the deployments command
 var deploymentsCmd = &cobra.Command{
 	Use:   "deployments [get|list|update|] [args]",
@@ -27,7 +24,7 @@ deployments update <DEPLOYMENT_NAME> <CONTAINER_NAME> <IMAGE>
 	`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		var connErr error
-		k8sConn, connErr = comms.NewK8sConnection()
+		k8sConn, connErr = comms.NewK8sConnection(namespace)
 		if connErr != nil {
 			// TODO: figure out the Cobra way to handle this
 			msg := fmt.Sprintf("problem establishing k8s connection: %s", connErr)
@@ -83,11 +80,11 @@ func displayGetDeployment(namespace string, deploymentName string) {
 
 // displayListDeployments fetches Deployments and prints them to the CLI
 func displayListDeployments(namespace string) {
-	activeDeployments, err := k8sConn.ListDeployments(namespace)
+	dlist, err := k8sConn.ListDeployments(namespace)
 	if err != nil {
 		log.Fatalln("Error retrieving Deployments: %s", err)
 	}
-	for _, deployment := range activeDeployments {
+	for _, deployment := range dlist.Deployments {
 		deployment.SerializeForCLI(os.Stdout)
 	}
 }
