@@ -1,6 +1,7 @@
 package comms
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -12,21 +13,39 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+var (
+	ErrContainerNotFound = errors.New("requested container couldn't be found")
+)
+
+// GzrDeployment is just here to let us declare methods on k8s Deployments
 type GzrDeployment v1beta1.Deployment
 
+// Serializer knows how to serialize for web (JSON) and CLI (templatized strings)
 type Serializer interface {
 	// SerializeForCLI writes templatized information to the provided io.Writer
 	SerializeForCLI(io.Writer) error
-	// SerializeForWeb kicks out JSON as a byte slice
-	SerializeForWeb() ([]byte, error)
+	// SerializeForWire kicks out JSON as a byte slice
+	SerializeForWire() ([]byte, error)
+}
+
+// DeploymentContainerInfo holds information about a Deployment sufficient for updating a Pod's container by name
+type DeploymentContainerInfo struct {
+	// Namespace is the Deployment's k8s namespace
+	Namespace string
+	// DeploymentName is the name of the Deployment
+	DeploymentName string
+	// ContainerName is the name of a Pod's container in the Deployment spec
+	ContainerName string
+	// Image is the name of the image (current or intended) for the container identified by ContainerName
+	Image string
 }
 
 // K8sCommunicator defines an interface for retrieving data from a k8s cluster
 type K8sCommunicator interface {
 	// ListDeployments returns the list of Deployments in the cluster
-	ListDeployments() ([]GzrDeployment, error)
+	ListDeployments(string) ([]GzrDeployment, error)
 	// GetDeployment returns the Deployment matching the given name
-	GetDeployment(string) (GzrDeployment, error)
+	GetDeployment(string, string) (GzrDeployment, error)
 }
 
 // K8sConnection implements the K8sCommunicator interface and holds a live connection to a k8s cluster
@@ -59,13 +78,46 @@ func NewK8sConnection() (*K8sConnection, error) {
 	return k, nil
 }
 
-// GetDeployment returns a GzrDeployment matching the name
+// GetDeployment returns a GzrDeployment matching the deploymentName in the given namespace
 func (k *K8sConnection) GetDeployment(namespace string, deploymentName string) (*GzrDeployment, error) {
 	var gd *GzrDeployment
 	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(namespace).Get(deploymentName)
 	if err != nil {
 		return gd, err
 	}
+	gdp := GzrDeployment(*deployment)
+	gd = &gdp
+
+	return gd, err
+}
+
+// UpdateDeployment updates a Deployment on the server to the structure represented by the argument
+// TODO: verify that requested image exists in the store
+// TODO: verify that requested image exists in the registry
+func (k *K8sConnection) UpdateDeployment(dci DeploymentContainerInfo) (*GzrDeployment, error) {
+	var gd *GzrDeployment
+	var containerIndex int
+	found := false
+
+	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(dci.Namespace).Get(dci.DeploymentName)
+	for index, container := range deployment.Spec.Template.Spec.Containers {
+		if container.Name == dci.ContainerName {
+			containerIndex = index
+			found = true
+		}
+	}
+
+	if !found {
+		return gd, ErrContainerNotFound
+	}
+
+	deployment.Spec.Template.Spec.Containers[containerIndex].Image = dci.Image
+	deployment, err = k.clientset.ExtensionsV1beta1().Deployments(dci.Namespace).Update(deployment)
+
+	if err != nil {
+		return gd, err
+	}
+
 	gdp := GzrDeployment(*deployment)
 	gd = &gdp
 
@@ -92,7 +144,7 @@ func (d GzrDeployment) SerializeForCLI(wr io.Writer) error {
 	return d.cliTemplate().Execute(wr, d)
 }
 
-// cliTemplate returns the template that will be used for serializing Deployment data to the CLI
+// cliTemplate returns the template that will be used for serializing Deployment data for display in the CLI
 func (d GzrDeployment) cliTemplate() *template.Template {
 	t := template.New("Deployment CLI")
 	t, _ = t.Parse(`-------------------------

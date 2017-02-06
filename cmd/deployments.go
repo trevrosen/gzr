@@ -1,17 +1,3 @@
-// Copyright © 2017 NAME HERE <EMAIL ADDRESS>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package cmd
 
 import (
@@ -23,8 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Global connection used by this command
+// Package-global k8s connection
 var k8sConn *comms.K8sConnection
+
+// Flag var for holding namespace info
+var namespace string
 
 // deploymentsCmd represents the deployments command
 var deploymentsCmd = &cobra.Command{
@@ -34,31 +23,52 @@ var deploymentsCmd = &cobra.Command{
 
 deployments list
 deployments get <DEPLOYMENT NAME>
-deployments update <DEPLOYMENT NAME> <IMAGE>
+deployments update <DEPLOYMENT_NAME> <CONTAINER_NAME> <IMAGE>
 	`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		var connErr error
 		k8sConn, connErr = comms.NewK8sConnection()
 		if connErr != nil {
 			// TODO: figure out the Cobra way to handle this
-			fmt.Println("Error establishing k8s connection: ", connErr)
-			os.Exit(1)
+			msg := fmt.Sprintf("problem establishing k8s connection: %s", connErr)
+			er(msg)
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 0 {
 			switch args[0] {
 			case "list":
-				// TODO: take in namespace from flag
-				displayListDeployments("default")
+				displayListDeployments(namespace)
 			case "get":
 				if len(args) < 2 {
 					er("'get' must be called with a Deployment name")
 				}
-				displayGetDeployment("default", args[1])
+				displayGetDeployment(namespace, args[1])
+			case "update":
+				updateDeployment(namespace, args[1], args[2], args[3])
 			} // end switch
-		} // TODO: have an else here that shows usage
+		} else {
+			fmt.Println("Not enough arguments")
+			fmt.Println(cmd.Use)
+		}
 	},
+}
+
+// updateDeployment updates a Deployment container with the info described by the DeploymentContainerInfo argument
+func updateDeployment(namespace string, deploymentName string, containerName string, image string) {
+	dci := comms.DeploymentContainerInfo{
+		Namespace:      namespace,
+		DeploymentName: deploymentName,
+		ContainerName:  containerName,
+		Image:          image,
+	}
+	deployment, err := k8sConn.UpdateDeployment(dci)
+
+	if err != nil {
+		msg := fmt.Sprintf("there was a problem updating container '%s' on deployment '%s' - %s", containerName, deploymentName, err)
+		er(msg)
+	}
+	deployment.SerializeForCLI(os.Stdout)
 }
 
 // displayGetDeployment fetches
@@ -84,15 +94,5 @@ func displayListDeployments(namespace string) {
 
 func init() {
 	RootCmd.AddCommand(deploymentsCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// deploymentsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// deploymentsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
+	deploymentsCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to look for Deployments in")
 }
