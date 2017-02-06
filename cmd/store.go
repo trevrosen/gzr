@@ -16,6 +16,11 @@ var registeredInterfaces = map[string]comms.ImageStorageInterface{
 	"etcd": &comms.EtcdImageStorer{},
 }
 
+var imageCmd = &cobra.Command{
+	Use:   "image (store|get)",
+	Short: "Base command for image data manipulation",
+}
+
 var storeCmd = &cobra.Command{
 	Use:   "store IMAGE_NAME METADATA_PATH",
 	Short: "Store metadata about an image for gzr to track",
@@ -40,7 +45,8 @@ var storeCmd = &cobra.Command{
 }
 
 var getCmd = &cobra.Command{
-	Use: "get IMAGE_NAME",
+	Use:   "get IMAGE_NAME",
+	Short: "Get data about the stored images under a particular name",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			fmt.Println("Must provide IMAGE_NAME")
@@ -63,6 +69,7 @@ var getCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(storeCmd)
-	RootCmd.AddCommand(getCmd)
+	imageCmd.AddCommand(storeCmd)
+	imageCmd.AddCommand(getCmd)
+	RootCmd.AddCommand(imageCmd)
 }
