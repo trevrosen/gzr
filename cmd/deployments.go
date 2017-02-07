@@ -14,7 +14,7 @@ var k8sConn *comms.K8sConnection
 
 // deploymentsCmd represents the deployments command
 var deploymentsCmd = &cobra.Command{
-	Use:   "deployments [get|list|update|] [args]",
+	Use:   "deployments list [args]",
 	Short: "Manage k8s Deployments",
 	Long: `Used to get information on single Deployments or all Deployments in a cluster
 
@@ -22,7 +22,7 @@ deployments list
 deployments get <DEPLOYMENT NAME>
 deployments update <DEPLOYMENT_NAME> <CONTAINER_NAME> <IMAGE>
 	`,
-	PreRun: func(cmd *cobra.Command, args []string) {
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		var connErr error
 		k8sConn, connErr = comms.NewK8sConnection(namespace)
 		if connErr != nil {
@@ -31,28 +31,50 @@ deployments update <DEPLOYMENT_NAME> <CONTAINER_NAME> <IMAGE>
 			er(msg)
 		}
 	},
+}
+
+// deploymentsListCmd returns a list of deployments
+var deploymentsListCmd = &cobra.Command{
+	Use:   "list [args]",
+	Short: "List k8s Deployments",
+	Long: `Used to get ReplicaSet and PodSpec information on all Deployments.
+
+deployments list
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) > 0 {
-			switch args[0] {
-			case "list":
-				displayListDeployments(namespace)
-			case "get":
-				if len(args) < 2 {
-					er("'get' must be called with a Deployment name")
-				}
-				displayGetDeployment(namespace, args[1])
-			case "update":
-				updateDeployment(namespace, args[1], args[2], args[3])
-			} // end switch
-		} else {
-			fmt.Println("Not enough arguments")
-			fmt.Println(cmd.Use)
-		}
+		listDeploymentsHandler(namespace)
 	},
 }
 
-// updateDeployment updates a Deployment container with the info described by the DeploymentContainerInfo argument
-func updateDeployment(namespace string, deploymentName string, containerName string, image string) {
+// deploymentGetCmd returns a list of deployments
+var deploymentGetCmd = &cobra.Command{
+	Use:   "get [args]",
+	Short: "Get a k8s Deployment by name",
+	Long: `Used to get a single Deployment by name, showing ReplicaSet
+and PodSpec information.
+
+deployments get mah-deployment
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
+		getDeploymentHandler(namespace, args[0])
+	},
+}
+
+// deploymentUpdateCmd returns a list of deployments
+var deploymentUpdateCmd = &cobra.Command{
+	Use:   "update [args]",
+	Short: "Update a container in a Deployment to a specific image",
+	Long: `Used to update a particular container in the Deployment's PodSpec by name.
+
+deployments update mah-deployment some-pod-container coolthing:latest
+	`,
+	Run: func(cmd *cobra.Command, args []string) {
+		updateDeploymentHandler(namespace, args[0], args[1], args[2])
+	},
+}
+
+// updateDeploymentHandler updates a Deployment container with the info described by the DeploymentContainerInfo argument
+func updateDeploymentHandler(namespace string, deploymentName string, containerName string, image string) {
 	dci := &comms.DeploymentContainerInfo{
 		Namespace:      namespace,
 		DeploymentName: deploymentName,
@@ -68,8 +90,8 @@ func updateDeployment(namespace string, deploymentName string, containerName str
 	deployment.SerializeForCLI(os.Stdout)
 }
 
-// displayGetDeployment fetches
-func displayGetDeployment(namespace string, deploymentName string) {
+// getDeploymentHandler fetches
+func getDeploymentHandler(namespace string, deploymentName string) {
 	deployment, err := k8sConn.GetDeployment(namespace, deploymentName)
 	if err != nil {
 		msg := fmt.Sprintf("there was a problem retrieving deployment '%s'", deploymentName)
@@ -78,8 +100,8 @@ func displayGetDeployment(namespace string, deploymentName string) {
 	deployment.SerializeForCLI(os.Stdout)
 }
 
-// displayListDeployments fetches Deployments and prints them to the CLI
-func displayListDeployments(namespace string) {
+// listDeploymentsHandler fetches Deployments and prints them to the CLI
+func listDeploymentsHandler(namespace string) {
 	dlist, err := k8sConn.ListDeployments(namespace)
 	if err != nil {
 		log.Fatalln("Error retrieving Deployments: %s", err)
@@ -90,6 +112,9 @@ func displayListDeployments(namespace string) {
 }
 
 func init() {
-	RootCmd.AddCommand(deploymentsCmd)
 	deploymentsCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to look for Deployments in")
+	deploymentsCmd.AddCommand(deploymentsListCmd)
+	deploymentsCmd.AddCommand(deploymentGetCmd)
+	deploymentsCmd.AddCommand(deploymentUpdateCmd)
+	RootCmd.AddCommand(deploymentsCmd)
 }
