@@ -1,16 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/bypasslane/gzr/cmd"
-	"github.com/bypasslane/gzr/comms"
 )
 
 func main() {
-	err := comms.EstablishK8sConnection("/Users/trevor/.kube/config")
-
-	if err != nil {
-		panic(err)
+	if err := cmd.RootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
 	}
-
-	cmd.Execute()
 }
