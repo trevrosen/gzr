@@ -4,3 +4,6 @@ import:
 - package: github.com/spf13/viper
 - package: k8s.io/client-go
   version: release-2.0
+- package: github.com/gorilla/mux
+- package: github.com/urfave/negroni
+
