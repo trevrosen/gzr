@@ -14,9 +14,9 @@ var k8sConn *comms.K8sConnection
 
 // deploymentsCmd represents the deployments command
 var deploymentsCmd = &cobra.Command{
-	Use:   "deployments list [args]",
+	Use:   "deployments [subcommand]",
 	Short: "Manage k8s Deployments",
-	Long: `Used to get information on single Deployments or all Deployments in a cluster
+	Long: `Used to get information on Deployments or update them
 
 deployments list
 deployments get <DEPLOYMENT NAME>
