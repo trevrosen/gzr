@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-var registeredInterfaces = map[string]comms.ImageStorageInterface{
-	"etcd": &comms.EtcdImageStorer{},
+var registeredInterfaces = map[string]comms.GozerMetadataStore{
+	"etcd": &comms.EtcdStorage{},
 }
 
 var imageCmd = &cobra.Command{
@@ -32,14 +32,24 @@ In short, only one version per day is allowed.`,
 			fmt.Println("Must provide IMAGE_NAME:VERSION and METADATA_PATH")
 			os.Exit(1)
 		}
-		var storer comms.ImageStorageInterface
+		var store comms.GozerMetadataStore
 		if registeredStore, ok := registeredInterfaces[viper.GetString("datastore.type")]; !ok {
 			fmt.Printf("%s is not a valid datastore type", viper.GetString("datastore.type"))
 			os.Exit(1)
 		} else {
-			storer = registeredStore
+			store = registeredStore
 		}
-		err := storer.StoreImage(args[0], args[1])
+		reader, err := os.Open(args[1])
+		if err != nil {
+			fmt.Printf("Could not read metadata file")
+			os.Exit(1)
+		}
+		meta, err := comms.CreateMeta(reader)
+		if err != nil {
+			fmt.Printf("%s", err.Error())
+			os.Exit(1)
+		}
+		err = store.Store(args[0], meta)
 		if err != nil {
 			fmt.Printf("Error storring image: %s", err.Error())
 			os.Exit(1)
@@ -55,14 +65,14 @@ var getCmd = &cobra.Command{
 			fmt.Println("Must provide IMAGE_NAME")
 			os.Exit(1)
 		}
-		var storer comms.ImageStorageInterface
+		var store comms.GozerMetadataStore
 		if registeredStore, ok := registeredInterfaces[viper.GetString("datastore.type")]; !ok {
 			fmt.Printf("%s is not a valid datastore type", viper.GetString("datastore.type"))
 			os.Exit(1)
 		} else {
-			storer = registeredStore
+			store = registeredStore
 		}
-		images, err := storer.GetImages(args[0])
+		images, err := store.List(args[0])
 		if err != nil {
 			fmt.Printf("Error: %s", err.Error())
 			os.Exit(1)

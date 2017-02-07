@@ -84,7 +84,7 @@ func extractVal(resp *clientv3.GetResponse) ([]Image, error) {
 	for _, kv := range resp.Kvs {
 		var meta ImageMetadata
 		json.Unmarshal(kv.Value, &meta) // TODO: Handle error
-		images = append(images, Image{ImageName: string(kv.Key), ImageMeta: meta})
+		images = append(images, Image{Name: string(kv.Key), Meta: meta})
 	}
 	return images, nil
 }
