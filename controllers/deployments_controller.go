@@ -53,8 +53,9 @@ func getDeploymentHandler(k8sConn comms.K8sCommunicator) http.HandlerFunc {
 		}
 		deployment, err := k8sConn.GetDeployment(k8sConn.GetNamespace(), name)
 
-		if err == comms.ErrContainerNotFound {
+		if err == comms.ErrDeploymentNotFound {
 			w.WriteHeader(http.StatusNotFound)
+			return
 		}
 
 		// TODO: catch other kinds of errors
@@ -83,7 +84,8 @@ func updateDeploymentHandler(k8sConn comms.K8sCommunicator) http.HandlerFunc {
 		}
 		deployment, err = k8sConn.GetDeployment(k8sConn.GetNamespace(), name)
 
-		if err == comms.ErrContainerNotFound {
+		if err == comms.ErrDeploymentNotFound {
+			log.Println(err)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -102,9 +104,9 @@ func updateDeploymentHandler(k8sConn comms.K8sCommunicator) http.HandlerFunc {
 		deployment, err = k8sConn.UpdateDeployment(userData.convertToDeploymentContainerInfo(k8sConn.GetNamespace(), name))
 
 		// TODO: more fine-grained error reporting
-		if err != nil {
+		if err == comms.ErrContainerNotFound {
 			log.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 

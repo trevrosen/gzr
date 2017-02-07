@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	ErrContainerNotFound  = errors.New("requested container couldn't be found")
-	ErrDeploymentNotFound = errors.New("requested Deployment couldn't be found")
+	ErrContainerNotFound        = errors.New("requested container couldn't be found")
+	ErrDeploymentNotFound       = errors.New("requested Deployment couldn't be found")
+	ErrNoDeploymentsInNamespace = errors.New("no Deployments found in specified namespace")
 )
 
 // GzrDeployment is just here to let us declare methods on k8s Deployments
@@ -119,6 +120,11 @@ func (k *K8sConnection) UpdateDeployment(dci *DeploymentContainerInfo) (*GzrDepl
 	found := false
 
 	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(k.namespace).Get(dci.DeploymentName)
+	// no Name in ObjectMeta means it was returned empty
+	if deployment.ObjectMeta.Name == "" {
+		return gd, ErrDeploymentNotFound
+	}
+
 	for index, container := range deployment.Spec.Template.Spec.Containers {
 		if container.Name == dci.ContainerName {
 			containerIndex = index
@@ -140,7 +146,7 @@ func (k *K8sConnection) UpdateDeployment(dci *DeploymentContainerInfo) (*GzrDepl
 	gdp := GzrDeployment(*deployment)
 	gd = &gdp
 
-	return gd, err
+	return gd, nil
 }
 
 // ListDeployments returns the active k8s Deployments for the given namespace
@@ -151,8 +157,8 @@ func (k *K8sConnection) ListDeployments(namespace string) (*GzrDeploymentList, e
 		return &gzrDeploymentList, err
 	}
 
-	if deploymentList == nil {
-		return nil, nil
+	if len(deploymentList.Items) == 0 {
+		return nil, ErrNoDeploymentsInNamespace
 	}
 
 	for _, deployment := range deploymentList.Items {
