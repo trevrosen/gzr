@@ -1,5 +1,5 @@
 hash: 489eb13876b67c69b908949fd18979f8144b192ea43d839be89cd4670537e72c
-updated: 2017-02-01T13:20:16.102504291-06:00
+updated: 2017-02-07T14:34:30.898375767-06:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -61,6 +61,10 @@ imports:
   - proto
 - name: github.com/google/gofuzz
   version: bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/mux
+  version: 392c28fe23e1c45ddba891b0320b3b5df220beea
 - name: github.com/hashicorp/hcl
   version: 99df0eb941dd8ddbc83d3f3605a34f6a686ac85e
   subpackages:
@@ -125,6 +129,8 @@ imports:
   version: f1f1a805ed361a0e078bb537e4ea78cd37dcf065
   subpackages:
   - codec
+- name: github.com/urfave/negroni
+  version: 61dbefc515b4dede6eb2de7df1e54d49edce892d
 - name: golang.org/x/crypto
   version: 1f22c0103821b9390939b6776727195525381532
   subpackages:

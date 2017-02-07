@@ -1,6 +1,7 @@
 package comms
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,11 +15,18 @@ import (
 )
 
 var (
-	ErrContainerNotFound = errors.New("requested container couldn't be found")
+	ErrContainerNotFound        = errors.New("requested container couldn't be found")
+	ErrDeploymentNotFound       = errors.New("requested Deployment couldn't be found")
+	ErrNoDeploymentsInNamespace = errors.New("no Deployments found in specified namespace")
 )
 
 // GzrDeployment is just here to let us declare methods on k8s Deployments
 type GzrDeployment v1beta1.Deployment
+
+// GzrDeploymentList is a collection of GzrDeployments
+type GzrDeploymentList struct {
+	Deployments []GzrDeployment `json:"deployments"`
+}
 
 // Serializer knows how to serialize for web (JSON) and CLI (templatized strings)
 type Serializer interface {
@@ -43,21 +51,27 @@ type DeploymentContainerInfo struct {
 // K8sCommunicator defines an interface for retrieving data from a k8s cluster
 type K8sCommunicator interface {
 	// ListDeployments returns the list of Deployments in the cluster
-	ListDeployments(string) ([]GzrDeployment, error)
+	ListDeployments(string) (*GzrDeploymentList, error)
 	// GetDeployment returns the Deployment matching the given name
-	GetDeployment(string, string) (GzrDeployment, error)
+	GetDeployment(string, string) (*GzrDeployment, error)
+	// UpdateDeployment updates the Deployment's container in the manner specified by the argument
+	UpdateDeployment(*DeploymentContainerInfo) (*GzrDeployment, error)
+	// GetNamespace returns the namespace
+	GetNamespace() string
 }
 
 // K8sConnection implements the K8sCommunicator interface and holds a live connection to a k8s cluster
 type K8sConnection struct {
 	// clientset is a collection of Kubernetes API clients
 	clientset *kubernetes.Clientset
+	// namespace is the k8s namespace active for this connection used to talk
+	namespace string
 }
 
 // NewK8sConnection returns a K8sConnection with an active v1.Clientset.
 //   - assumes that $HOME/.kube/config contains a legit Kubernetes config for an healthy k8s cluster.
 //   - panics if the configuration can't be used to connect to a k8s cluster.
-func NewK8sConnection() (*K8sConnection, error) {
+func NewK8sConnection(namespace string) (*K8sConnection, error) {
 	var k *K8sConnection
 	kubeconfig := fmt.Sprintf("%s/.kube/config", os.Getenv("HOME"))
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
@@ -73,6 +87,7 @@ func NewK8sConnection() (*K8sConnection, error) {
 
 	k = &K8sConnection{
 		clientset: clientset,
+		namespace: namespace,
 	}
 
 	return k, nil
@@ -81,7 +96,7 @@ func NewK8sConnection() (*K8sConnection, error) {
 // GetDeployment returns a GzrDeployment matching the deploymentName in the given namespace
 func (k *K8sConnection) GetDeployment(namespace string, deploymentName string) (*GzrDeployment, error) {
 	var gd *GzrDeployment
-	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(namespace).Get(deploymentName)
+	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(k.namespace).Get(deploymentName)
 	if err != nil {
 		return gd, err
 	}
@@ -91,15 +106,25 @@ func (k *K8sConnection) GetDeployment(namespace string, deploymentName string) (
 	return gd, err
 }
 
+// GetNamespace returns the namespace for the connection
+func (k *K8sConnection) GetNamespace() string {
+	return k.namespace
+}
+
 // UpdateDeployment updates a Deployment on the server to the structure represented by the argument
 // TODO: verify that requested image exists in the store
 // TODO: verify that requested image exists in the registry
-func (k *K8sConnection) UpdateDeployment(dci DeploymentContainerInfo) (*GzrDeployment, error) {
+func (k *K8sConnection) UpdateDeployment(dci *DeploymentContainerInfo) (*GzrDeployment, error) {
 	var gd *GzrDeployment
 	var containerIndex int
 	found := false
 
-	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(dci.Namespace).Get(dci.DeploymentName)
+	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(k.namespace).Get(dci.DeploymentName)
+	// no Name in ObjectMeta means it was returned empty
+	if deployment.ObjectMeta.Name == "" {
+		return gd, ErrDeploymentNotFound
+	}
+
 	for index, container := range deployment.Spec.Template.Spec.Containers {
 		if container.Name == dci.ContainerName {
 			containerIndex = index
@@ -121,22 +146,26 @@ func (k *K8sConnection) UpdateDeployment(dci DeploymentContainerInfo) (*GzrDeplo
 	gdp := GzrDeployment(*deployment)
 	gd = &gdp
 
-	return gd, err
+	return gd, nil
 }
 
 // ListDeployments returns the active k8s Deployments for the given namespace
-func (k *K8sConnection) ListDeployments(namespace string) ([]GzrDeployment, error) {
-	var deployments []GzrDeployment
+func (k *K8sConnection) ListDeployments(namespace string) (*GzrDeploymentList, error) {
+	var gzrDeploymentList GzrDeploymentList
 	deploymentList, err := k.clientset.ExtensionsV1beta1().Deployments(namespace).List(v1.ListOptions{})
 	if err != nil {
-		return deployments, err
+		return &gzrDeploymentList, err
+	}
+
+	if len(deploymentList.Items) == 0 {
+		return nil, ErrNoDeploymentsInNamespace
 	}
 
 	for _, deployment := range deploymentList.Items {
-		deployments = append(deployments, GzrDeployment(deployment))
+		gzrDeploymentList.Deployments = append(gzrDeploymentList.Deployments, GzrDeployment(deployment))
 	}
 
-	return deployments, nil
+	return &gzrDeploymentList, nil
 }
 
 // SerializeForCLI takes an io.Writer and writes templatized data to it representing a Deployment
@@ -156,4 +185,14 @@ Deployment: {{.ObjectMeta.Name}}
 {{end}}
 `)
 	return t
+}
+
+// SerializeForWire returns a JSON representation of the Deployment
+func (d GzrDeployment) SerializeForWire() ([]byte, error) {
+	return json.Marshal(d)
+}
+
+// SerializeForWire returns a JSON representation of the DeploymentList
+func (dl *GzrDeploymentList) SerializeForWire() ([]byte, error) {
+	return json.Marshal(dl)
 }
