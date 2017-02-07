@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 // Flag var for holding namespace info
@@ -15,6 +17,13 @@ var webPort int
 func er(msg interface{}) {
 	fmt.Println("Error:", msg)
 	os.Exit(-1)
+}
+
+// erBadUsage prints a message and the usage for the command
+func erBadUsage(msg string, cmd *cobra.Command) {
+	fmt.Println(msg)
+	fmt.Println(cmd.Use)
+	os.Exit(1)
 }
 
 // notify sends a formatted information line to stdout

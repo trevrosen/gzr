@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	ErrContainerNotFound = errors.New("requested container couldn't be found")
+	ErrContainerNotFound  = errors.New("requested container couldn't be found")
+	ErrDeploymentNotFound = errors.New("requested Deployment couldn't be found")
 )
 
 // GzrDeployment is just here to let us declare methods on k8s Deployments
@@ -49,17 +50,21 @@ type DeploymentContainerInfo struct {
 // K8sCommunicator defines an interface for retrieving data from a k8s cluster
 type K8sCommunicator interface {
 	// ListDeployments returns the list of Deployments in the cluster
-	ListDeployments(string) ([]GzrDeployment, error)
+	ListDeployments(string) (*GzrDeploymentList, error)
 	// GetDeployment returns the Deployment matching the given name
-	GetDeployment(string, string) (GzrDeployment, error)
+	GetDeployment(string, string) (*GzrDeployment, error)
+	// UpdateDeployment updates the Deployment's container in the manner specified by the argument
+	UpdateDeployment(*DeploymentContainerInfo) (*GzrDeployment, error)
+	// GetNamespace returns the namespace
+	GetNamespace() string
 }
 
 // K8sConnection implements the K8sCommunicator interface and holds a live connection to a k8s cluster
 type K8sConnection struct {
 	// clientset is a collection of Kubernetes API clients
 	clientset *kubernetes.Clientset
-	// Namespace is the k8s namespace active for this connection used to talk
-	Namespace string
+	// namespace is the k8s namespace active for this connection used to talk
+	namespace string
 }
 
 // NewK8sConnection returns a K8sConnection with an active v1.Clientset.
@@ -81,7 +86,7 @@ func NewK8sConnection(namespace string) (*K8sConnection, error) {
 
 	k = &K8sConnection{
 		clientset: clientset,
-		Namespace: namespace,
+		namespace: namespace,
 	}
 
 	return k, nil
@@ -90,7 +95,7 @@ func NewK8sConnection(namespace string) (*K8sConnection, error) {
 // GetDeployment returns a GzrDeployment matching the deploymentName in the given namespace
 func (k *K8sConnection) GetDeployment(namespace string, deploymentName string) (*GzrDeployment, error) {
 	var gd *GzrDeployment
-	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(namespace).Get(deploymentName)
+	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(k.namespace).Get(deploymentName)
 	if err != nil {
 		return gd, err
 	}
@@ -98,6 +103,11 @@ func (k *K8sConnection) GetDeployment(namespace string, deploymentName string) (
 	gd = &gdp
 
 	return gd, err
+}
+
+// GetNamespace returns the namespace for the connection
+func (k *K8sConnection) GetNamespace() string {
+	return k.namespace
 }
 
 // UpdateDeployment updates a Deployment on the server to the structure represented by the argument
@@ -108,7 +118,7 @@ func (k *K8sConnection) UpdateDeployment(dci *DeploymentContainerInfo) (*GzrDepl
 	var containerIndex int
 	found := false
 
-	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(dci.Namespace).Get(dci.DeploymentName)
+	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(k.namespace).Get(dci.DeploymentName)
 	for index, container := range deployment.Spec.Template.Spec.Containers {
 		if container.Name == dci.ContainerName {
 			containerIndex = index
@@ -139,6 +149,10 @@ func (k *K8sConnection) ListDeployments(namespace string) (*GzrDeploymentList, e
 	deploymentList, err := k.clientset.ExtensionsV1beta1().Deployments(namespace).List(v1.ListOptions{})
 	if err != nil {
 		return &gzrDeploymentList, err
+	}
+
+	if deploymentList == nil {
+		return nil, nil
 	}
 
 	for _, deployment := range deploymentList.Items {

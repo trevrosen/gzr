@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/negroni"
 )
 
-func App(k8sConn *comms.K8sConnection) http.Handler {
+func App(k8sConn comms.K8sCommunicator) http.Handler {
 	router := mux.NewRouter().StrictSlash(true)
 
 	router.HandleFunc("/", homeHandler).Methods("GET")

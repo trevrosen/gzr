@@ -35,7 +35,7 @@ deployments update <DEPLOYMENT_NAME> <CONTAINER_NAME> <IMAGE>
 
 // deploymentsListCmd returns a list of deployments
 var deploymentsListCmd = &cobra.Command{
-	Use:   "list [args]",
+	Use:   "list [flags]",
 	Short: "List k8s Deployments",
 	Long: `Used to get ReplicaSet and PodSpec information on all Deployments.
 
@@ -48,7 +48,7 @@ deployments list
 
 // deploymentGetCmd returns a list of deployments
 var deploymentGetCmd = &cobra.Command{
-	Use:   "get [args]",
+	Use:   "get <DEPLOYMENT_NAME> [flags]",
 	Short: "Get a k8s Deployment by name",
 	Long: `Used to get a single Deployment by name, showing ReplicaSet
 and PodSpec information.
@@ -56,19 +56,25 @@ and PodSpec information.
 deployments get mah-deployment
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			erBadUsage("Not enough arguments", cmd)
+		}
 		getDeploymentHandler(namespace, args[0])
 	},
 }
 
 // deploymentUpdateCmd returns a list of deployments
 var deploymentUpdateCmd = &cobra.Command{
-	Use:   "update [args]",
+	Use:   "update <DEPLOYMENT_NAME> <CONTAINER_NAME> <IMAGE> [flags]",
 	Short: "Update a container in a Deployment to a specific image",
 	Long: `Used to update a particular container in the Deployment's PodSpec by name.
 
 deployments update mah-deployment some-pod-container coolthing:latest
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 3 {
+			erBadUsage("Not enough arguments", cmd)
+		}
 		updateDeploymentHandler(namespace, args[0], args[1], args[2])
 	},
 }
@@ -84,8 +90,7 @@ func updateDeploymentHandler(namespace string, deploymentName string, containerN
 	deployment, err := k8sConn.UpdateDeployment(dci)
 
 	if err != nil {
-		msg := fmt.Sprintf("there was a problem updating container '%s' on deployment '%s' - %s", containerName, deploymentName, err)
-		er(msg)
+		er(fmt.Sprintf("there was a problem updating container '%s' on deployment '%s' - %s", containerName, deploymentName, err))
 	}
 	deployment.SerializeForCLI(os.Stdout)
 }
@@ -94,8 +99,7 @@ func updateDeploymentHandler(namespace string, deploymentName string, containerN
 func getDeploymentHandler(namespace string, deploymentName string) {
 	deployment, err := k8sConn.GetDeployment(namespace, deploymentName)
 	if err != nil {
-		msg := fmt.Sprintf("there was a problem retrieving deployment '%s'", deploymentName)
-		er(msg)
+		er(fmt.Sprintf("there was a problem retrieving deployment '%s'", deploymentName))
 	}
 	deployment.SerializeForCLI(os.Stdout)
 }

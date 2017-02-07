@@ -13,11 +13,8 @@ var cfgFile string
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "gzr",
-	Short: "A toolkit for managing Kubernetes-based deploys",
-	Long:  `Create, interrogate, and annotate container-based deployment resources`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Short: "A toolkit for managing Kubernetes Deployments",
+	Long:  `Create, interrogate, and annotate container-based Deployment resources`,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.

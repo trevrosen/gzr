@@ -17,12 +17,17 @@ type UpdateDeploymentUserType struct {
 }
 
 // listDeploymentsHandler lists deployments in the Kubernetes instance
-func listDeploymentsHandler(k8sConn *comms.K8sConnection) http.HandlerFunc {
+func listDeploymentsHandler(k8sConn comms.K8sCommunicator) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		deployments, err := k8sConn.ListDeployments(k8sConn.Namespace)
+		deployments, err := k8sConn.ListDeployments(k8sConn.GetNamespace())
 		// TODO: differentiate between legit errors and unhandleable errors
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if deployments == nil {
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
@@ -38,7 +43,7 @@ func listDeploymentsHandler(k8sConn *comms.K8sConnection) http.HandlerFunc {
 }
 
 // getDeploymentHandler gets a single Deployment by name from the Kubernetes instance
-func getDeploymentHandler(k8sConn *comms.K8sConnection) http.HandlerFunc {
+func getDeploymentHandler(k8sConn comms.K8sCommunicator) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := mux.Vars(r)["name"]
 
@@ -46,7 +51,7 @@ func getDeploymentHandler(k8sConn *comms.K8sConnection) http.HandlerFunc {
 			log.Println("name param required for this path")
 			w.WriteHeader(http.StatusBadRequest)
 		}
-		deployment, err := k8sConn.GetDeployment(k8sConn.Namespace, name)
+		deployment, err := k8sConn.GetDeployment(k8sConn.GetNamespace(), name)
 
 		if err == comms.ErrContainerNotFound {
 			w.WriteHeader(http.StatusNotFound)
@@ -66,7 +71,7 @@ func getDeploymentHandler(k8sConn *comms.K8sConnection) http.HandlerFunc {
 }
 
 // updateDeploymentHandler updates a specific container on a single Deployment to a given image
-func updateDeploymentHandler(k8sConn *comms.K8sConnection) http.HandlerFunc {
+func updateDeploymentHandler(k8sConn comms.K8sCommunicator) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		var deployment *comms.GzrDeployment
@@ -76,7 +81,7 @@ func updateDeploymentHandler(k8sConn *comms.K8sConnection) http.HandlerFunc {
 			log.Println("name param required for this path")
 			w.WriteHeader(http.StatusBadRequest)
 		}
-		deployment, err = k8sConn.GetDeployment(k8sConn.Namespace, name)
+		deployment, err = k8sConn.GetDeployment(k8sConn.GetNamespace(), name)
 
 		if err == comms.ErrContainerNotFound {
 			w.WriteHeader(http.StatusNotFound)
@@ -94,7 +99,7 @@ func updateDeploymentHandler(k8sConn *comms.K8sConnection) http.HandlerFunc {
 			return
 		}
 
-		deployment, err = k8sConn.UpdateDeployment(userData.convertToDeploymentContainerInfo(k8sConn.Namespace, name))
+		deployment, err = k8sConn.UpdateDeployment(userData.convertToDeploymentContainerInfo(k8sConn.GetNamespace(), name))
 
 		// TODO: more fine-grained error reporting
 		if err != nil {
