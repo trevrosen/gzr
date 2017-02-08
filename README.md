@@ -13,12 +13,12 @@ The missing (web or CLI) tool for your (containerized) microservices SDLC
 	* CI build information
 	* issue tracker information
   * originating repository
-  * last 10 closed PRs
+  * easy link to last 10 closed PRs
 
 ## Who's it for?
 * Ops/QA
 * Continual Integration Systems
-* Developers working on 1 microservice with N microservices supporting 
+* Developers working on 1 microservice with N microservices supporting
 
 ## Assumptions
 * Git is the SCM
@@ -31,7 +31,7 @@ The missing (web or CLI) tool for your (containerized) microservices SDLC
 We needed an easy way to manage deployments in a variety of contexts, thinking in terms of "built repo branches" instead of "container with SHA of X". We didn't want to have to teach Kubernetes to everyone in our org who needs to deploy containers. We decided to build our own **coarser-grained** tool for deploying that would also be able to handle any metadata annotations we found it useful to make to our container images.
 
 ## Usage
-`gzr` help shows you what you need to know for CLI usage
+`gzr help` shows you what you need to know for CLI usage
 
 `gzr web` stands up the web interface
 
@@ -39,7 +39,7 @@ We needed an easy way to manage deployments in a variety of contexts, thinking i
 ## Development
 
 ### Structure
-`gzr` is a CLI tool written with Cobra. It has a `web` command that stands up a web UI based on Gorilla, Negroni, Twitter Bootstrap, and AngularJS. The web handlers and CLI handlers both use the same `comms` package to talk to k8s and storage backends.
+`gzr` is a CLI tool written with Cobra. It has a `web` command that stands up a web UI based on [Gorilla](http://www.gorillatoolkit.org), [Negroni](https://github.com/urfave/negroni), [Twitter Bootstrap](http://getbootstrap.com), and [AngularJS](https://angularjs.org). The web handlers and CLI handlers both use the same `comms` package to talk to k8s and storage backends.
 
 
 * **cmd** - a bunch of Cobra commands and some utilities
