@@ -11,7 +11,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// EtcdStorage is simply an empty struct to implement GozerMetadataStore
+// EtcdStorage implements GozerMetadataStore and has exported
+// Etcd clients and KV accessors
 type EtcdStorage struct {
 	Client *clientv3.Client
 	KV     clientv3.KV

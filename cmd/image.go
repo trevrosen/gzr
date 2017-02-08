@@ -34,8 +34,7 @@ var imageCmd = &cobra.Command{
 func getStore() comms.GozerMetadataStore {
 	var store comms.GozerMetadataStore
 	if registeredStore, ok := registeredInterfaces[viper.GetString("datastore.type")]; !ok {
-		fmt.Printf("%s is not a valid datastore type", viper.GetString("datastore.type"))
-		os.Exit(1)
+		er(fmt.Sprintf("%s is not a valid datastore type", viper.GetString("datastore.type")))
 	} else {
 		store = registeredStore
 	}
@@ -50,24 +49,20 @@ Repeated store calls with the same VERSION on the same day will only keep the ne
 In short, only one version per day is allowed.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 {
-			fmt.Println("Must provide IMAGE_NAME:VERSION and METADATA_PATH")
-			os.Exit(1)
+			er(fmt.Sprintf("Must provide IMAGE_NAME:VERSION and METADATA_PATH"))
 		}
 		store := getStore()
 		reader, err := os.Open(args[1])
 		if err != nil {
-			fmt.Printf("Could not read metadata file")
-			os.Exit(1)
+			er(fmt.Sprintf("Could not read metadata file"))
 		}
 		meta, err := comms.CreateMeta(reader)
 		if err != nil {
-			fmt.Printf("%s", err.Error())
-			os.Exit(1)
+			er(fmt.Sprintf("%s", err.Error()))
 		}
 		err = store.Store(args[0], meta)
 		if err != nil {
-			fmt.Printf("Error storring image: %s", err.Error())
-			os.Exit(1)
+			er(fmt.Sprintf("Error storring image: %s", err.Error()))
 		}
 	},
 }
@@ -79,14 +74,12 @@ var getCmd = &cobra.Command{
 including all versions held within gzr`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
-			fmt.Println("Must provide IMAGE_NAME")
-			os.Exit(1)
+			er(fmt.Sprintf("Must provide IMAGE_NAME"))
 		}
 		store := getStore()
 		images, err := store.List(args[0])
 		if err != nil {
-			fmt.Printf("Error: %s", err.Error())
-			os.Exit(1)
+			er(fmt.Sprintf("Error: %s", err.Error()))
 		}
 		fmt.Printf("%+v\n", images)
 	},
@@ -97,14 +90,12 @@ var deleteCmd = &cobra.Command{
 	Short: "Delete metadata about an image:version within gzr",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
-			fmt.Println("Must provide IMAGE_NAME:VERSION")
-			os.Exit(1)
+			er(fmt.Sprintf("Must provide IMAGE_NAME:VERSION"))
 		}
 		store := getStore()
 		err := store.Delete(args[0])
 		if err != nil {
-			fmt.Printf("%s", err.Error())
-			os.Exit(1)
+			er(fmt.Sprintf("%s", err.Error()))
 		}
 	},
 }
