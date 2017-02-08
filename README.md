@@ -23,8 +23,8 @@ The missing (web or CLI) tool for your (containerized) microservices SDLC
 ## Assumptions
 * Git is the SCM
 * GitHub is the repository origin
-* [Kubernetes](http://kubernetes.io) (k8S) is the orchestration tool
-* [Docker](http://kubernetes.io) is the container runtime
+* [Kubernetes](https://kubernetes.io) (k8S) is the orchestration tool
+* [Docker](https://www.docker.com) is the container runtime
 * `$HOME/.kube/config` holds k8s a live configuration
 
 ## Why?
