@@ -25,7 +25,7 @@ The missing (web or CLI) tool for your (containerized) microservices SDLC
 * GitHub is the repository origin
 * [Kubernetes](https://kubernetes.io) (k8S) is the orchestration tool
 * [Docker](https://www.docker.com) is the container runtime
-* `$HOME/.kube/config` holds k8s a live configuration
+* `$HOME/.kube/config` holds a k8s live configuration
 
 ## Why?
 We needed an easy way to manage deployments in a variety of contexts, thinking in terms of "built repo branches" instead of "container with SHA of X". We didn't want to have to teach Kubernetes to everyone in our org who needs to deploy containers. We decided to build our own **coarser-grained** tool for deploying that would also be able to handle any metadata annotations we found it useful to make to our container images.
