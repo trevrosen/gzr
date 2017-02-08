@@ -13,7 +13,7 @@ The missing (web or CLI) tool for your (containerized) microservices SDLC
 	* CI build information
 	* issue tracker information
   * originating repository
-	* last 10 closed PRs
+  * last 10 closed PRs
 
 ## Who's it for?
 * Ops/QA
