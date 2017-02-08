@@ -2,13 +2,46 @@
 
 *"Gozer"*
 
-## What
-A CLI tool for managing containerized services and contexts at Bypass, assuming [Kubernetes](http://kubernetes.io) (K8S) as the orchestration tool and [Docker](http://kubernetes.io) as the container runtime.
+The missing (web or CLI) tool for your (containerized) microservices SDLC
+
+## What's it do?
+
+* Lets you view your microservices as a collection of running code projects
+* Provides web and command line interfaces to update deployments and to know what code built an image
+* Stores metadata about built container images. Supports etcd and BoltDB.
+* Tracks container metadata to provide information that registries don't always have:
+	* CI build information
+	* issue tracker information
+  * originating repository
+	* last 10 closed PRs
+
+## Who's it for?
+* Ops/QA
+* Continual Integration Systems
+* Developers working on 1 microservice with N microservices supporting 
+
+## Assumptions
+* Git is the SCM
+* GitHub is the repository origin
+* [Kubernetes](http://kubernetes.io) (k8S) is the orchestration tool
+* [Docker](http://kubernetes.io) is the container runtime
+* `$HOME/.kube/config` holds k8s a live configuration
 
 ## Why?
-We need an easy way for developers to manage Kubernetes-based resources, whether in a remote environment or locally. Think of `gzr` as sort of like the [Heroku toolbelt](https://blog.heroku.com/the_heroku_toolbelt) for Bypass stuff.
+We needed an easy way to manage deployments in a variety of contexts, thinking in terms of "built repo branches" instead of "container with SHA of X". We didn't want to have to teach Kubernetes to everyone in our org who needs to deploy containers. We decided to build our own **coarser-grained** tool for deploying that would also be able to handle any metadata annotations we found it useful to make to our container images.
 
-This will replace the other Gozer repo.
+## Usage
+`gzr` help shows you what you need to know for CLI usage
 
-## How
-In Go, written with the [Cobra CLI framework](https://github.com/spf13/cobra) that powers CLIs for Kubernetes, etcd, Docker etc.
+`gzr web` stands up the web interface
+
+
+## Development
+
+### Structure
+`gzr` is a CLI tool written with Cobra. It has a `web` command that stands up a web UI based on Gorilla, Negroni, Twitter Bootstrap, and AngularJS. The web handlers and CLI handlers both use the same `comms` package to talk to k8s and storage backends.
+
+
+* **cmd** - a bunch of Cobra commands and some utilities
+* **comms** - package for talking to k8s and storage backends
+* **controllers** - the web app routes and handlers
