@@ -24,6 +24,13 @@ var imageCmd = &cobra.Command{
 			er(fmt.Sprintf("Could not connect to etcd"))
 		}
 		registeredInterfaces["etcd"] = newEtcd
+
+		newBolt, err := comms.NewBoltStorage()
+		if err != nil {
+			fmt.Println(err)
+			er(fmt.Sprintf("Could not connect to Bolt"))
+		}
+		registeredInterfaces["bolt"] = newBolt
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		for _, backend := range registeredInterfaces {
