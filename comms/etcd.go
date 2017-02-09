@@ -37,8 +37,8 @@ func NewEtcdStorage() (*EtcdStorage, error) {
 }
 
 // List queries the etcd store for all images stored under a particular name
-func (storer *EtcdStorage) List(imageName string) ([]Image, error) {
-	images, err := storer.getEtcd(imageName)
+func (store *EtcdStorage) List(imageName string) ([]Image, error) {
+	images, err := store.getEtcd(imageName)
 	if err != nil {
 		return []Image{}, err
 	}
@@ -47,8 +47,8 @@ func (storer *EtcdStorage) List(imageName string) ([]Image, error) {
 
 // Store stores the metadata about an image where the metadata is a path
 // to a JSON-formatted file containing ImageMetadata fields
-func (storer *EtcdStorage) Store(imageName string, meta ImageMetadata) error {
-	err := storer.storeEtcd(imageName, meta)
+func (store *EtcdStorage) Store(imageName string, meta ImageMetadata) error {
+	err := store.storeEtcd(imageName, meta)
 	if err != nil {
 		return fmt.Errorf(err.Error())
 	}
@@ -56,17 +56,17 @@ func (storer *EtcdStorage) Store(imageName string, meta ImageMetadata) error {
 }
 
 // Cleanup closes the etcd client connection
-func (storer *EtcdStorage) Cleanup() {
-	storer.Client.Close()
+func (store *EtcdStorage) Cleanup() {
+	store.Client.Close()
 }
 
 // Delete deletes all information related to IMAGE_NAME:VERSION
-func (storer *EtcdStorage) Delete(imageName string) error {
-	_, err := storer.KV.Delete(context.Background(), imageName, clientv3.WithPrefix())
+func (store *EtcdStorage) Delete(imageName string) error {
+	_, err := store.KV.Delete(context.Background(), imageName, clientv3.WithPrefix())
 	return err
 }
 
-func (storer *EtcdStorage) createEtcdKey(imageName string) (string, error) {
+func (store *EtcdStorage) createEtcdKey(imageName string) (string, error) {
 	splitName := strings.Split(imageName, ":")
 	if len(splitName) != 2 {
 		return "", fmt.Errorf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon")
@@ -76,17 +76,17 @@ func (storer *EtcdStorage) createEtcdKey(imageName string) (string, error) {
 	return fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], nowString), nil
 }
 
-func (storer *EtcdStorage) storeEtcd(imageName string, imageMetadata ImageMetadata) error {
+func (store *EtcdStorage) storeEtcd(imageName string, imageMetadata ImageMetadata) error {
 	data, err := json.Marshal(imageMetadata)
 	if err != nil {
 		return err
 	}
 
-	key, err := storer.createEtcdKey(imageName)
+	key, err := store.createEtcdKey(imageName)
 	if err != nil {
 		return err
 	}
-	_, err = storer.KV.Put(context.Background(), key, string(data))
+	_, err = store.KV.Put(context.Background(), key, string(data))
 	if err != nil {
 		return err
 	}
@@ -95,16 +95,16 @@ func (storer *EtcdStorage) storeEtcd(imageName string, imageMetadata ImageMetada
 
 }
 
-func (storer *EtcdStorage) getEtcd(imageName string) ([]Image, error) {
-	resp, err := storer.KV.Get(context.Background(), fmt.Sprintf("%s:", imageName), clientv3.WithPrefix())
+func (store *EtcdStorage) getEtcd(imageName string) ([]Image, error) {
+	resp, err := store.KV.Get(context.Background(), fmt.Sprintf("%s:", imageName), clientv3.WithPrefix())
 	if err != nil {
 		return []Image{}, err
 	}
-	val, err := storer.extractVal(resp)
+	val, err := store.extractVal(resp)
 	return val, err
 }
 
-func (storer *EtcdStorage) extractVal(resp *clientv3.GetResponse) ([]Image, error) {
+func (store *EtcdStorage) extractVal(resp *clientv3.GetResponse) ([]Image, error) {
 	if len(resp.Kvs) < 1 {
 		return []Image{}, fmt.Errorf("No results found")
 	}
@@ -117,8 +117,8 @@ func (storer *EtcdStorage) extractVal(resp *clientv3.GetResponse) ([]Image, erro
 	return images, nil
 }
 
-func (storer *EtcdStorage) deleteEtcd(imageName string) error {
-	_, err := storer.KV.Delete(context.Background(), fmt.Sprintf("/%s", imageName))
+func (store *EtcdStorage) deleteEtcd(imageName string) error {
+	_, err := store.KV.Delete(context.Background(), fmt.Sprintf("/%s", imageName))
 	if err != nil {
 		return err
 	}
