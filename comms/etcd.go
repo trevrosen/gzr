@@ -18,6 +18,8 @@ type EtcdStorage struct {
 	KV     clientv3.KV
 }
 
+// NewEtcdStorage initializes and returns a pointer to an EtcdStorage
+// with a connected Client and KV
 func NewEtcdStorage() (*EtcdStorage, error) {
 	newEtcd := &EtcdStorage{}
 	cxnString := fmt.Sprintf("%s:%s", viper.GetString("datastore.host"), viper.GetString("datastore.port"))
@@ -53,10 +55,12 @@ func (storer *EtcdStorage) Store(imageName string, meta ImageMetadata) error {
 	return nil
 }
 
+// Cleanup closes the etcd client connection
 func (storer *EtcdStorage) Cleanup() {
 	storer.Client.Close()
 }
 
+// Delete deletes all information related to IMAGE_NAME:VERSION
 func (storer *EtcdStorage) Delete(imageName string) error {
 	_, err := storer.KV.Delete(context.Background(), imageName, clientv3.WithPrefix())
 	return err

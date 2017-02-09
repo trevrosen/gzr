@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/bypasslane/gzr/comms"
 	"github.com/spf13/cobra"
@@ -91,6 +92,10 @@ var deleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			er(fmt.Sprintf("Must provide IMAGE_NAME:VERSION"))
+		}
+		splitName := strings.Split(args[0], ":")
+		if len(splitName) != 2 {
+			er(fmt.Sprintf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon"))
 		}
 		store := getStore()
 		err := store.Delete(args[0])
