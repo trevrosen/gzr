@@ -38,19 +38,27 @@ func NewEtcdStorage() (*EtcdStorage, error) {
 
 // List queries the etcd store for all images stored under a particular name
 func (store *EtcdStorage) List(imageName string) ([]Image, error) {
-	images, err := store.getEtcd(imageName)
+	resp, err := store.KV.Get(context.Background(), fmt.Sprintf("%s:", imageName), clientv3.WithPrefix())
 	if err != nil {
 		return []Image{}, err
 	}
-	return images, nil
+	return store.extractImages(resp)
 }
 
-// Store stores the metadata about an image where the metadata is a path
-// to a JSON-formatted file containing ImageMetadata fields
+// Store stores the metadata about an image associated with its name in etcd
 func (store *EtcdStorage) Store(imageName string, meta ImageMetadata) error {
-	err := store.storeEtcd(imageName, meta)
+	data, err := json.Marshal(meta)
 	if err != nil {
-		return fmt.Errorf(err.Error())
+		return err
+	}
+
+	key, err := store.createKey(imageName)
+	if err != nil {
+		return err
+	}
+	_, err = store.KV.Put(context.Background(), key, string(data))
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -66,7 +74,39 @@ func (store *EtcdStorage) Delete(imageName string) error {
 	return err
 }
 
-func (store *EtcdStorage) createEtcdKey(imageName string) (string, error) {
+// Get returns a single image based on a name
+func (store *EtcdStorage) Get(imageName string) (Image, error) {
+	resp, err := store.KV.Get(context.Background(), fmt.Sprintf("%s:", imageName), clientv3.WithPrefix())
+	if err != nil {
+		return Image{}, err
+	}
+	if len(resp.Kvs) != 1 {
+		return Image{}, fmt.Errorf("Could not find single image for %s", imageName)
+	}
+	return store.extractImage(resp.Kvs[0].Value, resp.Kvs[0].Key), nil
+}
+
+// extractImage transforms raw []byte of metadata and key into a full Image
+func (store *EtcdStorage) extractImage(data []byte, key []byte) Image {
+	var meta ImageMetadata
+	json.Unmarshal(data, &meta)
+	return Image{Name: string(key), Meta: meta}
+}
+
+// extractImages transforms an etcd response into an []Image
+func (store *EtcdStorage) extractImages(resp *clientv3.GetResponse) ([]Image, error) {
+	if len(resp.Kvs) < 1 {
+		return []Image{}, fmt.Errorf("No results found")
+	}
+	var images []Image
+	for _, kv := range resp.Kvs {
+		images = append(images, store.extractImage(kv.Value, kv.Key))
+	}
+	return images, nil
+}
+
+// createKey creates the key used to tag data in etcd
+func (store *EtcdStorage) createKey(imageName string) (string, error) {
 	splitName := strings.Split(imageName, ":")
 	if len(splitName) != 2 {
 		return "", fmt.Errorf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon")
@@ -74,53 +114,4 @@ func (store *EtcdStorage) createEtcdKey(imageName string) (string, error) {
 	now := time.Now()
 	nowString := fmt.Sprintf("%d%d%d", now.Year(), now.Month(), now.Day())
 	return fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], nowString), nil
-}
-
-func (store *EtcdStorage) storeEtcd(imageName string, imageMetadata ImageMetadata) error {
-	data, err := json.Marshal(imageMetadata)
-	if err != nil {
-		return err
-	}
-
-	key, err := store.createEtcdKey(imageName)
-	if err != nil {
-		return err
-	}
-	_, err = store.KV.Put(context.Background(), key, string(data))
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-}
-
-func (store *EtcdStorage) getEtcd(imageName string) ([]Image, error) {
-	resp, err := store.KV.Get(context.Background(), fmt.Sprintf("%s:", imageName), clientv3.WithPrefix())
-	if err != nil {
-		return []Image{}, err
-	}
-	val, err := store.extractVal(resp)
-	return val, err
-}
-
-func (store *EtcdStorage) extractVal(resp *clientv3.GetResponse) ([]Image, error) {
-	if len(resp.Kvs) < 1 {
-		return []Image{}, fmt.Errorf("No results found")
-	}
-	var images []Image
-	for _, kv := range resp.Kvs {
-		var meta ImageMetadata
-		json.Unmarshal(kv.Value, &meta) // TODO: Handle error
-		images = append(images, Image{Name: string(kv.Key), Meta: meta})
-	}
-	return images, nil
-}
-
-func (store *EtcdStorage) deleteEtcd(imageName string) error {
-	_, err := store.KV.Delete(context.Background(), fmt.Sprintf("/%s", imageName))
-	if err != nil {
-		return err
-	}
-	return err
 }
