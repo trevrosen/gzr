@@ -108,6 +108,24 @@ func (store *BoltStorage) Delete(imageName string) error {
 	})
 }
 
+// Get returns a single image based on a name
+func (store *BoltStorage) Get(imageName string) (Image, error) {
+	var image Image
+	err := store.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(ImageBucket))
+		c := b.Cursor()
+		prefix := []byte(imageName)
+		for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+			image = store.extractImage(v, k)
+		}
+		return nil
+	})
+	if err != nil {
+		return Image{}, err
+	}
+	return image, nil
+}
+
 // createKey creates the key used to tag data in Bolt
 func (store *BoltStorage) createKey(imageName string) ([]byte, error) {
 	splitName := strings.Split(imageName, ":")
