@@ -20,7 +20,7 @@ type EtcdStorage struct {
 
 // NewEtcdStorage initializes and returns a pointer to an EtcdStorage
 // with a connected Client and KV
-func NewEtcdStorage() (*EtcdStorage, error) {
+func NewEtcdStorage() (GozerMetadataStore, error) {
 	newEtcd := &EtcdStorage{}
 	cxnString := fmt.Sprintf("%s:%s", viper.GetString("datastore.host"), viper.GetString("datastore.port"))
 	cli, err := clientv3.New(clientv3.Config{
