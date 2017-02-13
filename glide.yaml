@@ -6,4 +6,5 @@ import:
   version: release-2.0
 - package: github.com/gorilla/mux
 - package: github.com/urfave/negroni
-
+- package: github.com/coreos/etcd
+  version: ~3.1.0
