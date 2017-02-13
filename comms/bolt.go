@@ -15,10 +15,13 @@ const (
 	ImageBucket = "images"
 )
 
+// BoltStorage implements GozerMetadataStore and has an exported bolt.DB pointer
 type BoltStorage struct {
 	DB *bolt.DB
 }
 
+// NewBoltStorage initializes a BoltDB connection, makes sure the correct buckets exist,
+// and returns a BoltStorage pointer with the established connection
 func NewBoltStorage() (*BoltStorage, error) {
 	store := &BoltStorage{}
 	dbPath := viper.GetString("datastore.db_path")
@@ -45,6 +48,7 @@ func NewBoltStorage() (*BoltStorage, error) {
 	return store, nil
 }
 
+// List queries the Bolt store for all images stored under a particular name
 func (store *BoltStorage) List(imageName string) ([]Image, error) {
 	var images []Image
 	err := store.DB.View(func(tx *bolt.Tx) error {
@@ -63,6 +67,7 @@ func (store *BoltStorage) List(imageName string) ([]Image, error) {
 	return images, nil
 }
 
+// Store stores the metadata about an image associated with its name
 func (store *BoltStorage) Store(imageName string, meta ImageMetadata) error {
 	return store.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ImageBucket))
@@ -70,7 +75,7 @@ func (store *BoltStorage) Store(imageName string, meta ImageMetadata) error {
 		if err != nil {
 			return err
 		}
-		key, err := store.createBoltKey(imageName)
+		key, err := store.createKey(imageName)
 		if err != nil {
 			return err
 		}
@@ -82,10 +87,12 @@ func (store *BoltStorage) Store(imageName string, meta ImageMetadata) error {
 	})
 }
 
+// Cleanup closes the Bolt connection
 func (store *BoltStorage) Cleanup() {
 	store.DB.Close()
 }
 
+// Delete deletes all information related to IMAGE_NAME:VERSION
 func (store *BoltStorage) Delete(imageName string) error {
 	return store.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ImageBucket))
@@ -101,7 +108,8 @@ func (store *BoltStorage) Delete(imageName string) error {
 	})
 }
 
-func (store *BoltStorage) createBoltKey(imageName string) ([]byte, error) {
+// createKey creates the key used to tag data in Bolt
+func (store *BoltStorage) createKey(imageName string) ([]byte, error) {
 	splitName := strings.Split(imageName, ":")
 	if len(splitName) != 2 {
 		return []byte{}, fmt.Errorf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon")
@@ -111,6 +119,7 @@ func (store *BoltStorage) createBoltKey(imageName string) ([]byte, error) {
 	return []byte(fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], nowString)), nil
 }
 
+// extractImage transforms raw []byte of metadata and key into a full Image
 func (store *BoltStorage) extractImage(data []byte, key []byte) Image {
 	var meta ImageMetadata
 	json.Unmarshal(data, &meta)
