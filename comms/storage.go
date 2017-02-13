@@ -49,6 +49,7 @@ type ImageList struct {
 	Images []Image `json:"images"`
 }
 
+// SerializeForCLI takes an io.Writer and writes templatized data to it representing an image list
 func (l ImageList) SerializeForCLI(wr io.Writer) error {
 	return l.cliTemplate().Execute(wr, l)
 }
@@ -65,6 +66,16 @@ func (l ImageList) cliTemplate() *template.Template {
 {{end}}
 `)
 	return t
+}
+
+// SerializeForWire returns a JSON representation of the ImageList
+func (l ImageList) SerializeForWire() ([]byte, error) {
+	return json.Marshal(l)
+}
+
+// SerializeForWire returns a JSON representation of the Image
+func (i Image) SerializeForWire() ([]byte, error) {
+	return json.Marshal(i)
 }
 
 // CreateMeta takes a ReadWriter and returns an instance of ImageMetadata
