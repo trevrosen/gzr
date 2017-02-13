@@ -92,7 +92,7 @@ including all versions held within gzr`,
 		if err != nil {
 			er(fmt.Sprintf("Error: %s", err.Error()))
 		}
-		fmt.Printf("%+v\n", images)
+		images.SerializeForCLI(os.Stdout)
 	},
 }
 

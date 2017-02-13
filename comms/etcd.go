@@ -37,10 +37,10 @@ func NewEtcdStorage() (GozerMetadataStore, error) {
 }
 
 // List queries the etcd store for all images stored under a particular name
-func (store *EtcdStorage) List(imageName string) ([]Image, error) {
+func (store *EtcdStorage) List(imageName string) (ImageList, error) {
 	resp, err := store.KV.Get(context.Background(), fmt.Sprintf("%s:", imageName), clientv3.WithPrefix())
 	if err != nil {
-		return []Image{}, err
+		return ImageList{}, err
 	}
 	return store.extractImages(resp)
 }
@@ -94,15 +94,15 @@ func (store *EtcdStorage) extractImage(data []byte, key []byte) Image {
 }
 
 // extractImages transforms an etcd response into an []Image
-func (store *EtcdStorage) extractImages(resp *clientv3.GetResponse) ([]Image, error) {
+func (store *EtcdStorage) extractImages(resp *clientv3.GetResponse) (ImageList, error) {
 	if len(resp.Kvs) < 1 {
-		return []Image{}, fmt.Errorf("No results found")
+		return ImageList{}, fmt.Errorf("No results found")
 	}
 	var images []Image
 	for _, kv := range resp.Kvs {
 		images = append(images, store.extractImage(kv.Value, kv.Key))
 	}
-	return images, nil
+	return ImageList{Images: images}, nil
 }
 
 // createKey creates the key used to tag data in etcd

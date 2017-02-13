@@ -3,6 +3,7 @@ package comms
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 )
 
@@ -12,7 +13,7 @@ type GozerMetadataStore interface {
 	// Store stores image metadata with a name
 	Store(string, ImageMetadata) error
 	// List lists all of the images under a name
-	List(string) ([]Image, error)
+	List(string) (ImageList, error)
 	// Cleanup allows the storage backend to clean up any connections, etc
 	Cleanup()
 	// Delete deletes all images under a nmae
@@ -41,6 +42,29 @@ type ImageMetadata struct {
 	GitOrigin string `json:"git-origin"`
 	// CreatedAt is the time the metadata was stored, with day granularity
 	CreatedAt string `json:"created-at"`
+}
+
+// ImageList is a collection of Images
+type ImageList struct {
+	Images []Image `json:"images"`
+}
+
+func (l ImageList) SerializeForCLI(wr io.Writer) error {
+	return l.cliTemplate().Execute(wr, l)
+}
+
+func (l ImageList) cliTemplate() *template.Template {
+	t := template.New("Images")
+	t, _ = t.Parse(`Images {{range .Images}}
+- name: {{.Name}}
+  -- git-commit: {{.Meta.GitCommit}}
+  -- git-tag: {{.Meta.GitTag}}
+  -- git-annotation: {{.Meta.GitAnnotation}}
+  -- git-origin: {{.Meta.GitOrigin}}
+  -- created-at: {{.Meta.CreatedAt}}
+{{end}}
+`)
+	return t
 }
 
 // CreateMeta takes a ReadWriter and returns an instance of ImageMetadata
