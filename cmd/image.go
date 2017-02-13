@@ -50,7 +50,7 @@ Repeated store calls with the same VERSION on the same day will only keep the ne
 In short, only one version per day is allowed.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 {
-			er(fmt.Sprintf("Must provide IMAGE_NAME:VERSION and METADATA_PATH"))
+			erBadUsage(fmt.Sprintf("Must provide IMAGE_NAME:VERSION and METADATA_PATH"), cmd)
 		}
 		store := getStore()
 		reader, err := os.Open(args[1])
@@ -65,6 +65,7 @@ In short, only one version per day is allowed.`,
 		if err != nil {
 			er(fmt.Sprintf("Error storring image: %s", err.Error()))
 		}
+		fmt.Printf("Stored %s\n", args[0])
 	},
 }
 
@@ -75,7 +76,7 @@ var getCmd = &cobra.Command{
 including all versions held within gzr`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
-			er(fmt.Sprintf("Must provide IMAGE_NAME"))
+			erBadUsage(fmt.Sprintf("Must provide IMAGE_NAME"), cmd)
 		}
 		store := getStore()
 		images, err := store.List(args[0])
@@ -91,7 +92,7 @@ var deleteCmd = &cobra.Command{
 	Short: "Delete metadata about an image:version within gzr",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
-			er(fmt.Sprintf("Must provide IMAGE_NAME:VERSION"))
+			erBadUsage(fmt.Sprintf("Must provide IMAGE_NAME:VERSION"), cmd)
 		}
 		splitName := strings.Split(args[0], ":")
 		if len(splitName) != 2 {
@@ -102,6 +103,7 @@ var deleteCmd = &cobra.Command{
 		if err != nil {
 			er(fmt.Sprintf("%s", err.Error()))
 		}
+		fmt.Printf("Deleted %s\n", args[0])
 	},
 }
 
