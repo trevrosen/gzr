@@ -9,13 +9,16 @@ import (
 	"github.com/urfave/negroni"
 )
 
-func App(k8sConn comms.K8sCommunicator) http.Handler {
+func App(k8sConn comms.K8sCommunicator, imageStore comms.GozerMetadataStore) http.Handler {
 	router := mux.NewRouter().StrictSlash(true)
 
 	router.HandleFunc("/", homeHandler).Methods("GET")
 	router.HandleFunc("/deployments", listDeploymentsHandler(k8sConn)).Methods("GET")
 	router.HandleFunc("/deployments/{name}", getDeploymentHandler(k8sConn)).Methods("GET")
 	router.HandleFunc("/deployments/{name}", updateDeploymentHandler(k8sConn)).Methods("PUT")
+
+	router.HandleFunc("/images/{name}", getImagesHandler(imageStore)).Methods("GET")
+	router.HandleFunc("/images/{name}/{version}", getImageHandler(imageStore)).Methods("GET")
 	n := negroni.Classic()
 	n.Use(middleware.NewContentType()) // Ensure response Content-Type header is always "application/json"
 	n.UseHandler(router)

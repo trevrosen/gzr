@@ -49,7 +49,7 @@ func NewBoltStorage() (GozerMetadataStore, error) {
 }
 
 // List queries the Bolt store for all images stored under a particular name
-func (store *BoltStorage) List(imageName string) ([]Image, error) {
+func (store *BoltStorage) List(imageName string) (ImageList, error) {
 	var images []Image
 	err := store.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ImageBucket))
@@ -62,9 +62,9 @@ func (store *BoltStorage) List(imageName string) ([]Image, error) {
 		return nil
 	})
 	if err != nil {
-		return []Image{}, err
+		return ImageList{}, err
 	}
-	return images, nil
+	return ImageList{Images: images}, nil
 }
 
 // Store stores the metadata about an image associated with its name

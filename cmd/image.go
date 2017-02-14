@@ -14,35 +14,43 @@ import (
 )
 
 var registeredInterfaces = make(map[string]func() (comms.GozerMetadataStore, error))
+var store comms.GozerMetadataStore
 
 var imageCmd = &cobra.Command{
 	Use:   "image (store|get|delete)",
 	Short: "manage information about images",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		registeredInterfaces["etcd"] = comms.NewEtcdStorage
-		registeredInterfaces["bolt"] = comms.NewBoltStorage
-	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		store, err := getStore()
+		currentStore, err := getStore()
 		if err != nil {
 			return
 		}
-		store.Cleanup()
+		currentStore.Cleanup()
 	},
 }
 
 func getStore() (comms.GozerMetadataStore, error) {
+	// if we've already set `store`, use that
+	if store != nil {
+		return store, nil
+	}
+
+	storeType := viper.GetString("datastore.type")
+	if storeType == "" {
+		er("Must supply a datastore type in config file")
+	}
+
 	var storeCreator func() (comms.GozerMetadataStore, error)
-	if creator, ok := registeredInterfaces[viper.GetString("datastore.type")]; !ok {
-		er(fmt.Sprintf("%s is not a valid datastore type", viper.GetString("datastore.type")))
+	if creator, ok := registeredInterfaces[storeType]; !ok {
+		er(fmt.Sprintf("%s is not a valid datastore type", storeType))
 	} else {
 		storeCreator = creator
 	}
-	store, err := storeCreator()
+	newStore, err := storeCreator()
 	if err != nil {
 		return nil, err
 	}
-	return store, nil
+	store = newStore
+	return newStore, nil
 }
 
 var storeCmd = &cobra.Command{
@@ -120,6 +128,8 @@ var deleteCmd = &cobra.Command{
 }
 
 func init() {
+	registeredInterfaces["etcd"] = comms.NewEtcdStorage
+	registeredInterfaces["bolt"] = comms.NewBoltStorage
 	imageCmd.AddCommand(storeCmd)
 	imageCmd.AddCommand(getCmd)
 	imageCmd.AddCommand(deleteCmd)

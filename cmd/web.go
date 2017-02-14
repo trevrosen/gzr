@@ -35,7 +35,11 @@ gzr web --port=<CUSTOM_PORT_NUMBER>
 func bindAndRun() {
 	portString := fmt.Sprintf(":%v", webPort)
 	fmt.Printf("[-] Listening on %v\n", portString)
-	http.ListenAndServe(portString, controllers.App(k8sConn))
+	store, err := getStore()
+	if err != nil {
+		er(err.Error())
+	}
+	http.ListenAndServe(portString, controllers.App(k8sConn, store))
 }
 
 func init() {
