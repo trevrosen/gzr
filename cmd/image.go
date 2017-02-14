@@ -13,40 +13,36 @@ import (
 	"github.com/spf13/viper"
 )
 
-var registeredInterfaces = make(map[string]comms.GozerMetadataStore)
+var registeredInterfaces = make(map[string]func() (comms.GozerMetadataStore, error))
 
 var imageCmd = &cobra.Command{
 	Use:   "image (store|get|delete)",
 	Short: "manage information about images",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		newEtcd, err := comms.NewEtcdStorage()
-		if err != nil {
-			er(fmt.Sprintf("Could not connect to etcd"))
-		}
-		registeredInterfaces["etcd"] = newEtcd
-
-		newBolt, err := comms.NewBoltStorage()
-		if err != nil {
-			fmt.Println(err)
-			er(fmt.Sprintf("Could not connect to Bolt"))
-		}
-		registeredInterfaces["bolt"] = newBolt
+		registeredInterfaces["etcd"] = comms.NewEtcdStorage
+		registeredInterfaces["bolt"] = comms.NewBoltStorage
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		for _, backend := range registeredInterfaces {
-			backend.Cleanup()
+		store, err := getStore()
+		if err != nil {
+			return
 		}
+		store.Cleanup()
 	},
 }
 
-func getStore() comms.GozerMetadataStore {
-	var store comms.GozerMetadataStore
-	if registeredStore, ok := registeredInterfaces[viper.GetString("datastore.type")]; !ok {
+func getStore() (comms.GozerMetadataStore, error) {
+	var storeCreator func() (comms.GozerMetadataStore, error)
+	if creator, ok := registeredInterfaces[viper.GetString("datastore.type")]; !ok {
 		er(fmt.Sprintf("%s is not a valid datastore type", viper.GetString("datastore.type")))
 	} else {
-		store = registeredStore
+		storeCreator = creator
 	}
-	return store
+	store, err := storeCreator()
+	if err != nil {
+		return nil, err
+	}
+	return store, nil
 }
 
 var storeCmd = &cobra.Command{
@@ -59,7 +55,10 @@ In short, only one version per day is allowed.`,
 		if len(args) < 2 {
 			erBadUsage(fmt.Sprintf("Must provide IMAGE_NAME:VERSION and METADATA_PATH"), cmd)
 		}
-		store := getStore()
+		store, err := getStore()
+		if err != nil {
+			er(err.Error())
+		}
 		reader, err := os.Open(args[1])
 		if err != nil {
 			er(fmt.Sprintf("Could not read metadata file"))
@@ -85,7 +84,10 @@ including all versions held within gzr`,
 		if len(args) < 1 {
 			erBadUsage(fmt.Sprintf("Must provide IMAGE_NAME"), cmd)
 		}
-		store := getStore()
+		store, err := getStore()
+		if err != nil {
+			er(err.Error())
+		}
 		images, err := store.List(args[0])
 		if err != nil {
 			er(fmt.Sprintf("Error: %s", err.Error()))
@@ -105,8 +107,11 @@ var deleteCmd = &cobra.Command{
 		if len(splitName) != 2 {
 			er(fmt.Sprintf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon"))
 		}
-		store := getStore()
-		err := store.Delete(args[0])
+		store, err := getStore()
+		if err != nil {
+			er(err.Error())
+		}
+		err = store.Delete(args[0])
 		if err != nil {
 			er(fmt.Sprintf("%s", err.Error()))
 		}

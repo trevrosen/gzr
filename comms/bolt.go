@@ -22,7 +22,7 @@ type BoltStorage struct {
 
 // NewBoltStorage initializes a BoltDB connection, makes sure the correct buckets exist,
 // and returns a BoltStorage pointer with the established connection
-func NewBoltStorage() (*BoltStorage, error) {
+func NewBoltStorage() (GozerMetadataStore, error) {
 	store := &BoltStorage{}
 	dbPath := viper.GetString("datastore.db_path")
 	db, err := bolt.Open(dbPath, 0600, nil)
