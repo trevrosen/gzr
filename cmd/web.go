@@ -40,6 +40,7 @@ func bindAndRun() {
 
 func init() {
 	RootCmd.AddCommand(webCmd)
-	webCmd.Flags().IntVarP(&webPort, "port", "p", 9292, "the port to run the Gozer web interface on")
+	// According to Ghostbusters' canonical lore, Gozer the Gozerian was worshipped by the Sumerians around 6000 BC
+	webCmd.Flags().IntVarP(&webPort, "port", "p", 6000, "the port to run the Gozer web interface on")
 	webCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to look for Deployments in")
 }
