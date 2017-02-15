@@ -12,8 +12,8 @@ import (
 // webCmd represents the web command
 var webCmd = &cobra.Command{
 	Use:   "web",
-	Short: "Stand up the Gozer web interface",
-	Long: `Use Gozer functionality from inside the browser
+	Short: "Stand up the gzr web interface",
+	Long: `Use gzr functionality from inside the browser
 gzr web
 gzr web --port=<CUSTOM_PORT_NUMBER>
 	`,
@@ -45,6 +45,6 @@ func bindAndRun() {
 func init() {
 	RootCmd.AddCommand(webCmd)
 	// According to Ghostbusters' canonical lore, Gozer the Gozerian was worshipped by the Sumerians around 6000 BC
-	webCmd.Flags().IntVarP(&webPort, "port", "p", 6000, "the port to run the Gozer web interface on")
+	webCmd.Flags().IntVarP(&webPort, "port", "p", 6000, "the port to run the gzr web interface on")
 	webCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to look for Deployments in")
 }

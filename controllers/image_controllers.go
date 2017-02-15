@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func getImagesHandler(imageStore comms.GozerMetadataStore) http.HandlerFunc {
+func getImagesHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := mux.Vars(r)["name"]
 		if name == "" {
@@ -38,7 +38,7 @@ func getImagesHandler(imageStore comms.GozerMetadataStore) http.HandlerFunc {
 	})
 }
 
-func getImageHandler(imageStore comms.GozerMetadataStore) http.HandlerFunc {
+func getImageHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := mux.Vars(r)["name"]
 		version := mux.Vars(r)["version"]

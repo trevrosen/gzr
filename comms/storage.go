@@ -7,9 +7,9 @@ import (
 	"io"
 )
 
-// GozerMetadataStore is the interface that should be implemented for any
+// GzrMetadataStore is the interface that should be implemented for any
 // backend that needs to handle image data storage
-type GozerMetadataStore interface {
+type GzrMetadataStore interface {
 	// Store stores image metadata with a name
 	Store(string, ImageMetadata) error
 	// List lists all of the images under a name

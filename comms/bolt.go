@@ -15,14 +15,14 @@ const (
 	ImageBucket = "images"
 )
 
-// BoltStorage implements GozerMetadataStore and has an exported bolt.DB pointer
+// BoltStorage implements GzrMetadataStore and has an exported bolt.DB pointer
 type BoltStorage struct {
 	DB *bolt.DB
 }
 
 // NewBoltStorage initializes a BoltDB connection, makes sure the correct buckets exist,
 // and returns a BoltStorage pointer with the established connection
-func NewBoltStorage() (GozerMetadataStore, error) {
+func NewBoltStorage() (GzrMetadataStore, error) {
 	store := &BoltStorage{}
 	dbPath := viper.GetString("datastore.db_path")
 	db, err := bolt.Open(dbPath, 0600, nil)

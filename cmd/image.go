@@ -13,8 +13,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-var registeredInterfaces = make(map[string]func() (comms.GozerMetadataStore, error))
-var store comms.GozerMetadataStore
+var registeredInterfaces = make(map[string]func() (comms.GzrMetadataStore, error))
+var store comms.GzrMetadataStore
 
 var imageCmd = &cobra.Command{
 	Use:   "image (store|get|delete)",
@@ -28,7 +28,7 @@ var imageCmd = &cobra.Command{
 	},
 }
 
-func getStore() (comms.GozerMetadataStore, error) {
+func getStore() (comms.GzrMetadataStore, error) {
 	// if we've already set `store`, use that
 	if store != nil {
 		return store, nil
@@ -39,7 +39,7 @@ func getStore() (comms.GozerMetadataStore, error) {
 		er("Must supply a datastore type in config file")
 	}
 
-	var storeCreator func() (comms.GozerMetadataStore, error)
+	var storeCreator func() (comms.GzrMetadataStore, error)
 	if creator, ok := registeredInterfaces[storeType]; !ok {
 		er(fmt.Sprintf("%s is not a valid datastore type", storeType))
 	} else {
