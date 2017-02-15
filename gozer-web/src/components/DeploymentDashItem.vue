@@ -25,26 +25,26 @@
 </template>
 
 <script>
-  import {accordion, panel, spinner} from 'vue-strap'
+  import { accordion, panel, spinner } from 'vue-strap'
   import moment from 'moment';
   import imagesService from '../services/ImagesService'
   export default {
-    props     : {deployment: {type: Object}},
+    props: {deployment: {type: Object}},
     data() {
       return {
-        loading           : true,
+        loading: true,
         deploymentImageAge: undefined,
         deploymentAppImage: undefined,
         deploymentInternal: JSON.parse(JSON.stringify(this.deployment)),
       };
     },
-    created   : function () {
+    created: function () {
       const vm = this;
       vm.deploymentInternal.containers
         .forEach(function (container) {
           let containerImageParts = container.image.split(':');
-          let containerName       = containerImageParts[0];
-          let containerVersion    = containerImageParts[1];
+          let containerName = containerImageParts[0];
+          let containerVersion = containerImageParts[1];
           imagesService.getByVersion(containerName, containerVersion)
                        .then(function (image) {
                          if (image) {

@@ -33,16 +33,16 @@
   </div>
 </template>
 <script>
-  import {spinner} from 'vue-strap'
+  import { spinner } from 'vue-strap'
   import DeploymentService from '../services/DeploymentService'
   import DeploymentDashItem from './DeploymentDashItem'
   export default {
-    name      : 'index',
+    name: 'index',
     data ()  {
       return {
-        list   : [],
+        list: [],
         loading: true,
-        error  : null
+        error: null
       }
     },
     created() {

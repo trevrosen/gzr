@@ -13,5 +13,5 @@ new Vue({
   el: '#app',
   router,
   template: '<App/>',
-  components: { App, tabs, accordion, panel },
+  components: {App, tabs, accordion, panel},
 });
