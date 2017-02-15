@@ -26,7 +26,6 @@
 
 <script>
   import {accordion, panel, spinner} from 'vue-strap'
-  import _ from 'underscore';
   import moment from 'moment';
   import imagesService from '../services/ImagesService'
   export default {
@@ -51,7 +50,6 @@
                          if (image) {
                            vm.deploymentAppImage = image;
                            vm.deploymentImageAge = moment(image.metadata["created-at"]).fromNow();
-                           console.log(vm.deploymentImageAge)
                          }
                        })
                        .finally(function () {
