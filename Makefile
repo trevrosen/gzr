@@ -4,6 +4,8 @@ excluding_vendor := $(shell go list ./... | grep -v /vendor/)
 
 default: build
 
+vendor_install:
+	glide i
 build:
 	go build -i -o gzr
 
