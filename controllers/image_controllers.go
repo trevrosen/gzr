@@ -54,7 +54,7 @@ func getImageHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {
 			return
 		}
 		// If empty Image, one wasn't found
-		if image == (comms.Image{}) {
+		if image == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}

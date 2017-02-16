@@ -13,13 +13,13 @@ type GzrMetadataStore interface {
 	// Store stores image metadata with a name
 	Store(string, ImageMetadata) error
 	// List lists all of the images under a name
-	List(string) (ImageList, error)
+	List(string) (*ImageList, error)
 	// Cleanup allows the storage backend to clean up any connections, etc
 	Cleanup()
 	// Delete deletes all images under a nmae
 	Delete(string) error
 	// Get gets a single image with a version
-	Get(string) (Image, error)
+	Get(string) (*Image, error)
 }
 
 // Image is a struct unifying an image name with its metadata
@@ -46,15 +46,15 @@ type ImageMetadata struct {
 
 // ImageList is a collection of Images
 type ImageList struct {
-	Images []Image `json:"images"`
+	Images []*Image `json:"images"`
 }
 
 // SerializeForCLI takes an io.Writer and writes templatized data to it representing an image list
-func (l ImageList) SerializeForCLI(wr io.Writer) error {
+func (l *ImageList) SerializeForCLI(wr io.Writer) error {
 	return l.cliTemplate().Execute(wr, l)
 }
 
-func (l ImageList) cliTemplate() *template.Template {
+func (l *ImageList) cliTemplate() *template.Template {
 	t := template.New("Images")
 	t, _ = t.Parse(`Images {{range .Images}}
 - name: {{.Name}}
@@ -69,12 +69,12 @@ func (l ImageList) cliTemplate() *template.Template {
 }
 
 // SerializeForWire returns a JSON representation of the ImageList
-func (l ImageList) SerializeForWire() ([]byte, error) {
+func (l *ImageList) SerializeForWire() ([]byte, error) {
 	return json.Marshal(l)
 }
 
 // SerializeForWire returns a JSON representation of the Image
-func (i Image) SerializeForWire() ([]byte, error) {
+func (i *Image) SerializeForWire() ([]byte, error) {
 	return json.Marshal(i)
 }
 

@@ -37,10 +37,10 @@ func NewEtcdStorage() (GzrMetadataStore, error) {
 }
 
 // List queries the etcd store for all images stored under a particular name
-func (store *EtcdStorage) List(imageName string) (ImageList, error) {
+func (store *EtcdStorage) List(imageName string) (*ImageList, error) {
 	resp, err := store.KV.Get(context.Background(), fmt.Sprintf("%s:", imageName), clientv3.WithPrefix())
 	if err != nil {
-		return ImageList{}, err
+		return nil, err
 	}
 	return store.extractImages(resp)
 }
@@ -75,34 +75,37 @@ func (store *EtcdStorage) Delete(imageName string) error {
 }
 
 // Get returns a single image based on a name
-func (store *EtcdStorage) Get(imageName string) (Image, error) {
+func (store *EtcdStorage) Get(imageName string) (*Image, error) {
 	resp, err := store.KV.Get(context.Background(), fmt.Sprintf("%s:", imageName), clientv3.WithPrefix())
 	if err != nil {
-		return Image{}, err
+		return nil, err
 	}
-	if len(resp.Kvs) != 1 {
-		return Image{}, fmt.Errorf("Could not find single image for %s", imageName)
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+	if len(resp.Kvs) >= 1 {
+		return nil, fmt.Errorf("Found multiple images for %s", imageName)
 	}
 	return store.extractImage(resp.Kvs[0].Value, resp.Kvs[0].Key), nil
 }
 
 // extractImage transforms raw []byte of metadata and key into a full Image
-func (store *EtcdStorage) extractImage(data []byte, key []byte) Image {
+func (store *EtcdStorage) extractImage(data []byte, key []byte) *Image {
 	var meta ImageMetadata
 	json.Unmarshal(data, &meta)
-	return Image{Name: string(key), Meta: meta}
+	return &Image{Name: string(key), Meta: meta}
 }
 
 // extractImages transforms an etcd response into an []Image
-func (store *EtcdStorage) extractImages(resp *clientv3.GetResponse) (ImageList, error) {
+func (store *EtcdStorage) extractImages(resp *clientv3.GetResponse) (*ImageList, error) {
 	if len(resp.Kvs) < 1 {
-		return ImageList{}, fmt.Errorf("No results found")
+		return nil, fmt.Errorf("No results found")
 	}
-	var images []Image
+	var images []*Image
 	for _, kv := range resp.Kvs {
 		images = append(images, store.extractImage(kv.Value, kv.Key))
 	}
-	return ImageList{Images: images}, nil
+	return &ImageList{Images: images}, nil
 }
 
 // createKey creates the key used to tag data in etcd
