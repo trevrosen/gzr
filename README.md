@@ -44,6 +44,7 @@ We needed an easy way to manage deployments in a variety of contexts, thinking i
 ### Example configs and data
 `image.example.json` contains an example of the image metadata expected for `store` commands. `.gzr.bolt.json` and `.gzr.etcd.json` contain example configuration files for each of those storage backends.
 You can load the sample data with `make build && ./gzr image store test:1.0 $(pwd)/image.example.json`.
+Your config file should be stored in $HOME/.gzr.json. If you are using the BoltDB backend the path supplied in this file must consist of existing directories.
 
 
 * **cmd** - a bunch of Cobra commands and some utilities
