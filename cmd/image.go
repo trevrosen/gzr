@@ -22,7 +22,16 @@ var storeCmd = &cobra.Command{
 	Short: "Store metadata about an image for gzr to track",
 	Long: `Used to store metadata about an image for gzr to track. The name must be formatted as NAME:VERSION.
 Repeated store calls with the same VERSION on the same day will only keep the newest, but different days will be stored.
-In short, only one version per day is allowed.`,
+In short, only one version per day is allowed.
+
+The structure of the JSON at the METADATA_PATH should be as follows:
+{
+    "git-commit": <string>,
+    "git-tag": [<string>, <string>, ...],
+    "git-annotation": [<string>, <string>, ...],
+    "git-origin": <string>,
+    "created-at": <ISO 8601-formatted string>
+}`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 {
 			erBadUsage(fmt.Sprintf("Must provide IMAGE_NAME:VERSION and METADATA_PATH"), cmd)

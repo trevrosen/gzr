@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
 )
 
 // GzrMetadataStore is the interface that should be implemented for any
@@ -35,9 +36,9 @@ type ImageMetadata struct {
 	// GitCommit is the commit related to the built image
 	GitCommit string `json:"git-commit"`
 	// GitTag is the tag related to the built image if it exists
-	GitTag string `json:"git-tag"`
+	GitTag []string `json:"git-tag"`
 	// GitAnnotation is the annotation related to the built image if it exists
-	GitAnnotation string `json:"git-annotation"`
+	GitAnnotation []string `json:"git-annotation"`
 	// GitOrigin is the remote origin for the git repo associated with the image
 	GitOrigin string `json:"git-origin"`
 	// CreatedAt is the time the metadata was stored, with day granularity
@@ -59,8 +60,8 @@ func (l *ImageList) cliTemplate() *template.Template {
 	t, _ = t.Parse(`Images {{range .Images}}
 - name: {{.Name}}
   -- git-commit: {{.Meta.GitCommit}}
-  -- git-tag: {{.Meta.GitTag}}
-  -- git-annotation: {{.Meta.GitAnnotation}}
+  -- git-tag: [{{ range $index, $element := .Meta.GitTag}}{{if $index}}, {{end}}{{$element}}{{end}}]
+  -- git-annotation: [{{ range $index, $element := .Meta.GitAnnotation}}{{if $index}}, {{end}}{{$element}}{{end}}]
   -- git-origin: {{.Meta.GitOrigin}}
   -- created-at: {{.Meta.CreatedAt}}
 {{end}}
@@ -82,10 +83,14 @@ func (i *Image) SerializeForWire() ([]byte, error) {
 // after parsing
 func CreateMeta(reader io.ReadWriter) (ImageMetadata, error) {
 	var meta ImageMetadata
-	decoder := json.NewDecoder(reader)
-	err := decoder.Decode(&meta)
+	b, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return ImageMetadata{}, fmt.Errorf("Could not read metadata file")
+		return ImageMetadata{}, fmt.Errorf("Could not read metadata file: %s", err.Error())
+	}
+
+	err = json.Unmarshal(b, &meta)
+	if err != nil {
+		return ImageMetadata{}, fmt.Errorf("Could not read metadata file: %s\nCheck the data types in your image metadata JSON.", err.Error())
 	}
 	return meta, nil
 }
