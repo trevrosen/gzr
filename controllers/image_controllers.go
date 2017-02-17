@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/bypasslane/gzr/comms"
 	"github.com/gorilla/mux"
@@ -12,6 +13,7 @@ import (
 func getImagesHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := mux.Vars(r)["name"]
+		name, err := url.QueryUnescape(name)
 		if name == "" {
 			log.Println("name param required for this path")
 			w.WriteHeader(http.StatusBadRequest)
@@ -41,6 +43,11 @@ func getImagesHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {
 func getImageHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := mux.Vars(r)["name"]
+		name, err := url.QueryUnescape(name)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		version := mux.Vars(r)["version"]
 		if name == "" || version == "" {
 			log.Println("name and version required for this path")
