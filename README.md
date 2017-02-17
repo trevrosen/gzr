@@ -33,7 +33,7 @@ We needed an easy way to manage deployments in a variety of contexts, thinking i
 ## Usage
 `gzr help` shows you what you need to know for CLI usage
 
-`gzr web` stands up the web interface
+`gzr web` stands up the web interface - See [Gozer Web Docs](https://github.com/bypasslane/gzr/blob/master/gozer-web/README.md)
 
 
 ## Development
