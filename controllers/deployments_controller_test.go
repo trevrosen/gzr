@@ -13,8 +13,9 @@ func TestListDeploymentsExist(t *testing.T) {
 	mockK8sConn := &comms.MockK8sCommunicator{
 		OnListDeployments: populatedDeploymentsList,
 	}
+	mockImageStore := &comms.MockStore{}
 
-	server := httptest.NewServer(App(mockK8sConn))
+	server := httptest.NewServer(App(mockK8sConn, mockImageStore))
 	defer server.Close()
 	res, err := getDeploymentsList(server)
 
@@ -31,8 +32,9 @@ func TestListDeploymentsNone(t *testing.T) {
 	mockK8sConn := &comms.MockK8sCommunicator{
 		OnListDeployments: emptyDeploymentsList,
 	}
+	mockImageStore := &comms.MockStore{}
 
-	server := httptest.NewServer(App(mockK8sConn))
+	server := httptest.NewServer(App(mockK8sConn, mockImageStore))
 	defer server.Close()
 	res, err := getDeploymentsList(server)
 
@@ -49,8 +51,9 @@ func TestGetDeploymentFound(t *testing.T) {
 	mockK8sConn := &comms.MockK8sCommunicator{
 		OnGetDeployment: populatedGetDeployment,
 	}
+	mockImageStore := &comms.MockStore{}
 
-	server := httptest.NewServer(App(mockK8sConn))
+	server := httptest.NewServer(App(mockK8sConn, mockImageStore))
 	defer server.Close()
 	res, err := getDeployment(server)
 
@@ -67,8 +70,9 @@ func TestGetDeploymentNotFound(t *testing.T) {
 	mockK8sConn := &comms.MockK8sCommunicator{
 		OnGetDeployment: emptyGetDeployment,
 	}
+	mockImageStore := &comms.MockStore{}
 
-	server := httptest.NewServer(App(mockK8sConn))
+	server := httptest.NewServer(App(mockK8sConn, mockImageStore))
 	defer server.Close()
 	res, err := getDeployment(server)
 
@@ -86,8 +90,9 @@ func TestUpdateDeploymentAndCountainerFound(t *testing.T) {
 		OnGetDeployment:    populatedGetDeployment,
 		OnUpdateDeployment: successfulUpdateDeployment,
 	}
+	mockImageStore := &comms.MockStore{}
 
-	server := httptest.NewServer(App(mockK8sConn))
+	server := httptest.NewServer(App(mockK8sConn, mockImageStore))
 	defer server.Close()
 	res, err := updateDeployment(server)
 
@@ -104,8 +109,9 @@ func TestUpdateDeploymentNotFound(t *testing.T) {
 	mockK8sConn := &comms.MockK8sCommunicator{
 		OnGetDeployment: emptyGetDeployment,
 	}
+	mockImageStore := &comms.MockStore{}
 
-	server := httptest.NewServer(App(mockK8sConn))
+	server := httptest.NewServer(App(mockK8sConn, mockImageStore))
 	defer server.Close()
 	res, err := updateDeployment(server)
 
@@ -116,6 +122,7 @@ func TestUpdateDeploymentNotFound(t *testing.T) {
 	if res.StatusCode != http.StatusNotFound {
 		t.Errorf("Expected %v, but received %v", http.StatusNotFound, res.Status)
 	}
+
 }
 
 func TestUpdateContainerNotFound(t *testing.T) {
@@ -123,8 +130,9 @@ func TestUpdateContainerNotFound(t *testing.T) {
 		OnGetDeployment:    populatedGetDeployment,
 		OnUpdateDeployment: failUpdateDeploymentNoContainer,
 	}
+	mockImageStore := &comms.MockStore{}
 
-	server := httptest.NewServer(App(mockK8sConn))
+	server := httptest.NewServer(App(mockK8sConn, mockImageStore))
 	defer server.Close()
 	res, err := updateDeployment(server)
 

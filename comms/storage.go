@@ -3,22 +3,23 @@ package comms
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 )
 
-// GozerMetadataStore is the interface that should be implemented for any
+// GzrMetadataStore is the interface that should be implemented for any
 // backend that needs to handle image data storage
-type GozerMetadataStore interface {
+type GzrMetadataStore interface {
 	// Store stores image metadata with a name
 	Store(string, ImageMetadata) error
 	// List lists all of the images under a name
-	List(string) ([]Image, error)
+	List(string) (*ImageList, error)
 	// Cleanup allows the storage backend to clean up any connections, etc
 	Cleanup()
 	// Delete deletes all images under a nmae
 	Delete(string) error
 	// Get gets a single image with a version
-	Get(string) (Image, error)
+	Get(string) (*Image, error)
 }
 
 // Image is a struct unifying an image name with its metadata
@@ -41,6 +42,40 @@ type ImageMetadata struct {
 	GitOrigin string `json:"git-origin"`
 	// CreatedAt is the time the metadata was stored, with day granularity
 	CreatedAt string `json:"created-at"`
+}
+
+// ImageList is a collection of Images
+type ImageList struct {
+	Images []*Image `json:"images"`
+}
+
+// SerializeForCLI takes an io.Writer and writes templatized data to it representing an image list
+func (l *ImageList) SerializeForCLI(wr io.Writer) error {
+	return l.cliTemplate().Execute(wr, l)
+}
+
+func (l *ImageList) cliTemplate() *template.Template {
+	t := template.New("Images")
+	t, _ = t.Parse(`Images {{range .Images}}
+- name: {{.Name}}
+  -- git-commit: {{.Meta.GitCommit}}
+  -- git-tag: {{.Meta.GitTag}}
+  -- git-annotation: {{.Meta.GitAnnotation}}
+  -- git-origin: {{.Meta.GitOrigin}}
+  -- created-at: {{.Meta.CreatedAt}}
+{{end}}
+`)
+	return t
+}
+
+// SerializeForWire returns a JSON representation of the ImageList
+func (l *ImageList) SerializeForWire() ([]byte, error) {
+	return json.Marshal(l)
+}
+
+// SerializeForWire returns a JSON representation of the Image
+func (i *Image) SerializeForWire() ([]byte, error) {
+	return json.Marshal(i)
 }
 
 // CreateMeta takes a ReadWriter and returns an instance of ImageMetadata

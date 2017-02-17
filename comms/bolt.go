@@ -15,14 +15,14 @@ const (
 	ImageBucket = "images"
 )
 
-// BoltStorage implements GozerMetadataStore and has an exported bolt.DB pointer
+// BoltStorage implements GzrMetadataStore and has an exported bolt.DB pointer
 type BoltStorage struct {
 	DB *bolt.DB
 }
 
 // NewBoltStorage initializes a BoltDB connection, makes sure the correct buckets exist,
 // and returns a BoltStorage pointer with the established connection
-func NewBoltStorage() (GozerMetadataStore, error) {
+func NewBoltStorage() (GzrMetadataStore, error) {
 	store := &BoltStorage{}
 	dbPath := viper.GetString("datastore.db_path")
 	db, err := bolt.Open(dbPath, 0600, nil)
@@ -49,8 +49,8 @@ func NewBoltStorage() (GozerMetadataStore, error) {
 }
 
 // List queries the Bolt store for all images stored under a particular name
-func (store *BoltStorage) List(imageName string) ([]Image, error) {
-	var images []Image
+func (store *BoltStorage) List(imageName string) (*ImageList, error) {
+	var images []*Image
 	err := store.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ImageBucket))
 		c := b.Cursor()
@@ -62,9 +62,9 @@ func (store *BoltStorage) List(imageName string) ([]Image, error) {
 		return nil
 	})
 	if err != nil {
-		return []Image{}, err
+		return &ImageList{}, err
 	}
-	return images, nil
+	return &ImageList{Images: images}, nil
 }
 
 // Store stores the metadata about an image associated with its name
@@ -109,8 +109,8 @@ func (store *BoltStorage) Delete(imageName string) error {
 }
 
 // Get returns a single image based on a name
-func (store *BoltStorage) Get(imageName string) (Image, error) {
-	var image Image
+func (store *BoltStorage) Get(imageName string) (*Image, error) {
+	var image *Image
 	err := store.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ImageBucket))
 		c := b.Cursor()
@@ -121,7 +121,7 @@ func (store *BoltStorage) Get(imageName string) (Image, error) {
 		return nil
 	})
 	if err != nil {
-		return Image{}, err
+		return &Image{}, err
 	}
 	return image, nil
 }
@@ -138,8 +138,8 @@ func (store *BoltStorage) createKey(imageName string) ([]byte, error) {
 }
 
 // extractImage transforms raw []byte of metadata and key into a full Image
-func (store *BoltStorage) extractImage(data []byte, key []byte) Image {
+func (store *BoltStorage) extractImage(data []byte, key []byte) *Image {
 	var meta ImageMetadata
 	json.Unmarshal(data, &meta)
-	return Image{Name: string(key), Meta: meta}
+	return &Image{Name: string(key), Meta: meta}
 }

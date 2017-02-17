@@ -10,39 +10,11 @@ import (
 
 	"github.com/bypasslane/gzr/comms"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
-
-var registeredInterfaces = make(map[string]func() (comms.GozerMetadataStore, error))
 
 var imageCmd = &cobra.Command{
 	Use:   "image (store|get|delete)",
 	Short: "manage information about images",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		registeredInterfaces["etcd"] = comms.NewEtcdStorage
-		registeredInterfaces["bolt"] = comms.NewBoltStorage
-	},
-	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		store, err := getStore()
-		if err != nil {
-			return
-		}
-		store.Cleanup()
-	},
-}
-
-func getStore() (comms.GozerMetadataStore, error) {
-	var storeCreator func() (comms.GozerMetadataStore, error)
-	if creator, ok := registeredInterfaces[viper.GetString("datastore.type")]; !ok {
-		er(fmt.Sprintf("%s is not a valid datastore type", viper.GetString("datastore.type")))
-	} else {
-		storeCreator = creator
-	}
-	store, err := storeCreator()
-	if err != nil {
-		return nil, err
-	}
-	return store, nil
 }
 
 var storeCmd = &cobra.Command{
@@ -55,10 +27,6 @@ In short, only one version per day is allowed.`,
 		if len(args) < 2 {
 			erBadUsage(fmt.Sprintf("Must provide IMAGE_NAME:VERSION and METADATA_PATH"), cmd)
 		}
-		store, err := getStore()
-		if err != nil {
-			er(err.Error())
-		}
 		reader, err := os.Open(args[1])
 		if err != nil {
 			er(fmt.Sprintf("Could not read metadata file"))
@@ -67,7 +35,7 @@ In short, only one version per day is allowed.`,
 		if err != nil {
 			er(fmt.Sprintf("%s", err.Error()))
 		}
-		err = store.Store(args[0], meta)
+		err = imageStore.Store(args[0], meta)
 		if err != nil {
 			er(fmt.Sprintf("Error storring image: %s", err.Error()))
 		}
@@ -84,15 +52,11 @@ including all versions held within gzr`,
 		if len(args) < 1 {
 			erBadUsage(fmt.Sprintf("Must provide IMAGE_NAME"), cmd)
 		}
-		store, err := getStore()
-		if err != nil {
-			er(err.Error())
-		}
-		images, err := store.List(args[0])
+		images, err := imageStore.List(args[0])
 		if err != nil {
 			er(fmt.Sprintf("Error: %s", err.Error()))
 		}
-		fmt.Printf("%+v\n", images)
+		images.SerializeForCLI(os.Stdout)
 	},
 }
 
@@ -107,11 +71,7 @@ var deleteCmd = &cobra.Command{
 		if len(splitName) != 2 {
 			er(fmt.Sprintf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon"))
 		}
-		store, err := getStore()
-		if err != nil {
-			er(err.Error())
-		}
-		err = store.Delete(args[0])
+		err := imageStore.Delete(args[0])
 		if err != nil {
 			er(fmt.Sprintf("%s", err.Error()))
 		}
