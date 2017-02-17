@@ -10,7 +10,7 @@ import (
 )
 
 func App(k8sConn comms.K8sCommunicator, imageStore comms.GzrMetadataStore) http.Handler {
-	router := mux.NewRouter().StrictSlash(true)
+	router := mux.NewRouter().StrictSlash(true).UseEncodedPath()
 
 	router.HandleFunc("/", homeHandler).Methods("GET")
 	router.HandleFunc("/deployments", listDeploymentsHandler(k8sConn)).Methods("GET")
