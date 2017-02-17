@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
 )
 
 // GzrMetadataStore is the interface that should be implemented for any
@@ -82,10 +83,14 @@ func (i *Image) SerializeForWire() ([]byte, error) {
 // after parsing
 func CreateMeta(reader io.ReadWriter) (ImageMetadata, error) {
 	var meta ImageMetadata
-	decoder := json.NewDecoder(reader)
-	err := decoder.Decode(&meta)
+	b, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return ImageMetadata{}, fmt.Errorf("Could not read metadata file")
+		return ImageMetadata{}, fmt.Errorf("Could not read metadata file: %s", err.Error())
+	}
+
+	err = json.Unmarshal(b, &meta)
+	if err != nil {
+		return ImageMetadata{}, fmt.Errorf("Could not read metadata file: %s\nCheck the data types in your image metadata JSON.", err.Error())
 	}
 	return meta, nil
 }
