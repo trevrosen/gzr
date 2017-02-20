@@ -11,7 +11,7 @@ clean:
 	rm gzr
 
 run:
-	go build -o gzr && ./gzr
+	go build -i -o gzr && ./gzr web
 
 test:
 	go test -v $(excluding_vendor)
