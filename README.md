@@ -42,9 +42,9 @@ We needed an easy way to manage deployments in a variety of contexts, thinking i
 `gzr` is a CLI tool written with Cobra. It has a `web` command that stands up a web UI based on [Gorilla](http://www.gorillatoolkit.org), [Negroni](https://github.com/urfave/negroni), [Twitter Bootstrap](http://getbootstrap.com), and [Vue.js](https://vuejs.org/). The web handlers and CLI handlers both use the same `comms` package to talk to k8s and storage backends.
 
 ### Example configs and data
-`image.example.json` contains an example of the image metadata expected for `store` commands. `.gzr.bolt.json` and `.gzr.etcd.json` contain example configuration files for each of those storage backends.
+`image.example.json` contains an example of the image metadata expected for `store` commands. `config.json.bolt_example` and `config.json.etcd_example` contain example configuration files for each of those storage backends.
 You can load the sample data with `make build && ./gzr image store test:1.0 $(pwd)/image.example.json`.
-Your config file should be stored in $HOME/.gzr.json. If you are using the BoltDB backend the path supplied in this file must consist of existing directories.
+Your config file should be stored in $HOME/.gzr/config.json. If you are using the BoltDB backend the path supplied in this file must consist of existing directories.
 
 
 * **cmd** - a bunch of Cobra commands and some utilities
