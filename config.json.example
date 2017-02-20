@@ -1,6 +1,0 @@
-{
-	"datastore":{
-		"type":"bolt",
-		"db_path":"/Users/trevor/.gzr/data.bolt"
-	}
-}
