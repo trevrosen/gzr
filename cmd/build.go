@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/bypasslane/gzr/comms"
 	"github.com/spf13/cobra"
 )
@@ -12,6 +14,11 @@ var buildCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		dockerArgs := append([]string{"build"}, args...)
 		comms.BuildDocker(dockerArgs...)
+		meta, err := comms.BuildMetadata()
+		if err != nil {
+			er(err.Error())
+		}
+		fmt.Println(meta)
 	},
 }
 
