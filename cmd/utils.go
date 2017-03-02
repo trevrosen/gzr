@@ -13,6 +13,9 @@ var namespace string
 // webPort is the port that the web interface will run on
 var webPort int
 
+// imageTag is the name:tag string for storage/docker
+var imageTag string
+
 // er prints an error message and exits. Lifted from Cobra source.
 func er(msg interface{}) {
 	fmt.Println("Error:", msg)

@@ -35,6 +35,9 @@ We needed an easy way to manage deployments in a variety of contexts, thinking i
 
 `gzr web` stands up the web interface - See [Gozer Web Docs](https://github.com/bypasslane/gzr/blob/master/gozer-web/README.md)
 
+`gzr build`  TODO
+because gzr stores container metadata, the tag flag for docker build is required in gozer build. we decided this was easier than deviating from Docker’s build interface
+
 
 ## Development
 
