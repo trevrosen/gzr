@@ -15,11 +15,14 @@ tagging (-t NAME:TAG) is required for metadata storage`,
 		if imageTag == "" {
 			er("Must provide --tag/-t flag with NAME:TAG")
 		}
-		dockerArgs := append([]string{"build"}, args...)
 		// Add tag back to the docker args because it is pulled out since it is a flag
-		dockerArgs = append(dockerArgs, []string{"-t", imageTag}...)
+		dockerArgs := append(args, []string{"-t", imageTag}...)
 		comms.BuildDocker(dockerArgs...)
 		meta, err := comms.BuildMetadata()
+		if err != nil {
+			er(err.Error())
+		}
+		err = comms.PushDocker(imageTag)
 		if err != nil {
 			er(err.Error())
 		}
