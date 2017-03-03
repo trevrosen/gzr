@@ -19,6 +19,7 @@
     "moment-timezone": "^0.5.11",
     "underscore": "^1.8.3",
     "vue": "^2.1.10",
+    "vue-multiselect": "2.0.0-beta.14",
     "vue-resource": "^1.2.0",
     "vue-router": "^2.2.0",
     "vue-strap": "git+ssh://git@github.com/wffranco/vue-strap.git#457ba43b1dba8794f14a2fece1ee9b81950c03fb"

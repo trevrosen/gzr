@@ -14,7 +14,7 @@ function convertToKeyValueObjects(kvp) {
 }
 
 function transformDeploymentToViewObj(deployment) {
-
+console.log(deployment, 'dep')
   return {
     $$originalObject: deployment,
     name: deployment.metadata.name,
@@ -43,9 +43,18 @@ function list() {
 
 function get(name) {
   return deploymentsResource.get({name: name}).then(function (response) {
-    return transformDeploymentToViewObj(response.data.deployment);
+
+    return transformDeploymentToViewObj(response.data.deployments[0]);
   })
 }
+function set(name, container_name, image) {
+  return deploymentsResource
+    .update({name: name},
+            {
+              container_name: container_name,
+              image: image
+            })
+}
 
-export default {list, get}
+export default {list, get, set}
 
