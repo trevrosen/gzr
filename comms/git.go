@@ -52,6 +52,9 @@ func getRemote() (string, error) {
 	}
 
 	remotes := strings.Fields(string(remote))
+	if len(remotes) == 0 {
+		return "", nil
+	}
 	return remotes[1], nil
 }
 

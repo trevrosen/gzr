@@ -17,7 +17,10 @@ tagging (-t NAME:TAG) is required for metadata storage`,
 		}
 		// Add tag back to the docker args because it is pulled out since it is a flag
 		dockerArgs := append(args, []string{"-t", imageTag}...)
-		comms.BuildDocker(dockerArgs...)
+		err := comms.BuildDocker(dockerArgs...)
+		if err != nil {
+			er(err.Error())
+		}
 		meta, err := comms.BuildMetadata()
 		if err != nil {
 			er(err.Error())
@@ -26,7 +29,10 @@ tagging (-t NAME:TAG) is required for metadata storage`,
 		if err != nil {
 			er(err.Error())
 		}
-		imageStore.Store(imageTag, meta)
+		err = imageStore.Store(imageTag, meta)
+		if err != nil {
+			er(err.Error())
+		}
 	},
 }
 
