@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/bypasslane/gzr/comms"
 	"github.com/spf13/cobra"
 )
@@ -15,25 +17,36 @@ tagging (-t NAME:TAG) is required for metadata storage`,
 		if imageTag == "" {
 			er("Must provide --tag/-t flag with NAME:TAG")
 		}
-		// Add tag back to the docker args because it is pulled out since it is a flag
-		dockerArgs := append(args, []string{"-t", imageTag}...)
-		err := comms.BuildDocker(dockerArgs...)
-		if err != nil {
-			er(err.Error())
-		}
-		meta, err := comms.BuildMetadata()
-		if err != nil {
-			er(err.Error())
-		}
-		err = comms.PushDocker(imageTag)
-		if err != nil {
-			er(err.Error())
-		}
-		err = imageStore.Store(imageTag, meta)
+		builder := comms.NewDockerBuilder()
+		args = append(args, []string{"-t", imageTag}...)
+		err := buildImage(args, builder)
 		if err != nil {
 			er(err.Error())
 		}
 	},
+}
+
+func buildImage(args []string, builder comms.ImageBuilder) error {
+	// Add tag back to the docker args because it is pulled out since it is a flag
+	err := builder.Build(args...)
+	if err != nil {
+		return err
+	}
+	meta, err := comms.BuildMetadata()
+	if err != nil {
+		return err
+	}
+	err = builder.Push(imageTag)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("imageTag: %s\n", imageTag)
+	fmt.Printf("meta: %+v\n", meta)
+	err = imageStore.Store(imageTag, meta)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func init() {
