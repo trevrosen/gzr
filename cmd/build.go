@@ -8,8 +8,7 @@ import (
 var buildCmd = &cobra.Command{
 	Use:   "build [DOCKER ARGS...]",
 	Short: "Wrapper around `docker build` to produce Docker artifacts as well as register data with gzr",
-	Long: `Wrapper around "docker build" to produce Docker artifacts as well as register data with gzr
-tagging (-t/--tag) is not allowed, as gzr supplies tags`,
+	Long:  `Wrapper around "docker build" to produce Docker artifacts as well as register data with gzr`,
 	Run: func(cmd *cobra.Command, args []string) {
 		builder := comms.NewDockerBuilder()
 		err := buildImage(args, builder)
