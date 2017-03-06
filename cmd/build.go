@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/bypasslane/gzr/comms"
 	"github.com/spf13/cobra"
 )
@@ -11,14 +9,9 @@ var buildCmd = &cobra.Command{
 	Use:   "build [DOCKER ARGS...]",
 	Short: "Wrapper around `docker build` to produce Docker artifacts as well as register data with gzr",
 	Long: `Wrapper around "docker build" to produce Docker artifacts as well as register data with gzr
-tagging (-t NAME:TAG) is required for metadata storage`,
+tagging (-t/--tag) is not allowed, as gzr supplies tags`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// require tag option
-		if imageTag == "" {
-			er("Must provide --tag/-t flag with NAME:TAG")
-		}
 		builder := comms.NewDockerBuilder()
-		args = append(args, []string{"-t", imageTag}...)
 		err := buildImage(args, builder)
 		if err != nil {
 			er(err.Error())
@@ -27,7 +20,6 @@ tagging (-t NAME:TAG) is required for metadata storage`,
 }
 
 func buildImage(args []string, builder comms.ImageBuilder) error {
-	// Add tag back to the docker args because it is pulled out since it is a flag
 	err := builder.Build(args...)
 	if err != nil {
 		return err
@@ -36,13 +28,15 @@ func buildImage(args []string, builder comms.ImageBuilder) error {
 	if err != nil {
 		return err
 	}
-	err = builder.Push(imageTag)
+	tag, err := comms.GetDockerTag()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("imageTag: %s\n", imageTag)
-	fmt.Printf("meta: %+v\n", meta)
-	err = imageStore.Store(imageTag, meta)
+	err = builder.Push(tag)
+	if err != nil {
+		return err
+	}
+	err = imageStore.Store(tag, meta)
 	if err != nil {
 		return err
 	}
@@ -51,5 +45,4 @@ func buildImage(args []string, builder comms.ImageBuilder) error {
 
 func init() {
 	RootCmd.AddCommand(buildCmd)
-	buildCmd.Flags().StringVarP(&imageTag, "tag", "t", "", "Name and a tag in the NAME:TAG format")
 }

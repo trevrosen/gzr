@@ -13,7 +13,6 @@ var (
 )
 
 func TestBuildImage(t *testing.T) {
-	imageTag = "test:test"
 	buildCalled = false
 	pushCalled = false
 	imageStore = &comms.MockStore{

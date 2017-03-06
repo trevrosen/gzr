@@ -1,8 +1,13 @@
 package comms
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
+	"strings"
+	"time"
+
+	"github.com/spf13/viper"
 )
 
 type ImageBuilder interface {
@@ -17,11 +22,15 @@ func NewDockerBuilder() *DockerBuilder {
 }
 
 func (docker *DockerBuilder) Build(args ...string) error {
-	args = append([]string{"build"}, args...)
+	tag, err := GetDockerTag()
+	if err != nil {
+		return err
+	}
+	args = append([]string{"build", "-t", tag}, args...)
 	build := exec.Command("docker", args...)
 	build.Stdout = os.Stdout
 	build.Stderr = os.Stderr
-	err := build.Run()
+	err = build.Run()
 	if err != nil {
 		return err
 	}
@@ -38,4 +47,18 @@ func (docker *DockerBuilder) Push(name string) error {
 		return err
 	}
 	return nil
+}
+
+func GetDockerTag() (string, error) {
+	hash, err := getCommitHash()
+	if err != nil {
+		return "", err
+	}
+	imageName, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	splitImageName := strings.Split(imageName, "/")
+	name := splitImageName[len(splitImageName)-1]
+	return fmt.Sprintf("%s/%s:%s.%s", viper.GetString("repository"), name, time.Now().Format("20060102"), hash), nil
 }

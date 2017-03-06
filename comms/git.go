@@ -41,7 +41,8 @@ func getCommitHash() (string, error) {
 		return "", err
 	}
 
-	return string(hash), nil
+	stripped := strings.TrimSpace(string(hash))
+	return stripped, nil
 }
 
 func getRemote() (string, error) {
