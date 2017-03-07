@@ -11,6 +11,9 @@
     <div v-if="loading">
       <spinner v-model="loading" size="lg" fixed text="Loading Deployments"></spinner>
     </div>
+    <div v-else-if="deploying">
+      <spinner v-model="deploying" size="lg" fixed text="Deploying..."></spinner>
+    </div>
     <div v-else-if="!error" class="panel panel-default">
       <div class="panel-heading">
         <h2>{{deployment.name}}</h2>
@@ -24,7 +27,9 @@
                 <div class="col-xs-10">
                   <dl class="dl-horizontal">
                     <dt>Commit</dt>
-                    <dd>{{image.metadata['git-commit']}} (Github button)</dd>
+                    <dd>{{image.metadata['git-commit']}} <a class="btn btn-default btn-github"
+                                                            :href="deploymentAppImage.metadata['git-origin'] + '/commit/' +image.metadata['git-commit']"><img
+                      src="../img/GitHub-Mark-32px.png" alt="github"/></a></dd>
 
                     <dt>Annotations</dt>
                     <dd><span class="label label-info" v-for="annotation in image.metadata['git-annotation']">{{annotation}}</span></dd>
@@ -34,16 +39,14 @@
                   </dl>
                 </div>
                 <div class="col-xs-2">
-                  <button class="btn btn-primary">Deploy</button>
+                  <button class="btn btn-primary" v-if="image.name !== deploymentAppImageName" @click="doDeploy(image)">Deploy</button>
+                  <span class="deployed" v-else><span class="glyphicon glyphicon-saved text-success"></span> Deployed</span>
                 </div>
               </div>
 
             </div>
           </div>
         </div>
-
-
-        <!--Image: <v-select v-model="deploymentAppImageName" :options="deploymentImages" search options-value="name" options-label="name"></v-select>-->
         <span></span>
       </div>
     </div>
@@ -70,6 +73,8 @@
   import moment from 'moment';
   import imagesService from '../services/ImagesService'
   import deploymentService from '../services/DeploymentService'
+  import Promise from 'bluebird';
+
   export default {
     props: {name: {type: String}},
     data() {
@@ -79,45 +84,45 @@
         deploymentAppImage: {},
         deploymentImages: [],
         deploymentAppImageName: '',
-        deployment: {}
-      };
+        deployment: {},
+        deploying: false
+      }
+    },
+    watch: {
+      // call the method if the route changes
+      '$route': 'fetchData'
+    },
+    methods: {
+      doDeploy: function (image) {
+        const vm = this;
+        vm.deploying = image;
+        deploymentService
+          .set(vm.deployment.name, vm.deploymentAppImage.containerName, image.deploymentImageName)
+          .then(function () {
+            return vm.fetchData();
+          })
+          .finally(function () {
+            vm.deploying = false;
+          })
+      },
+      fetchData: function () {
+        const vm = this;
+        return Promise.delay(250,
+                             deploymentService
+                               .getDeploymentWithImageData(vm.name)
+                               .then(function (result) {
+                                 vm.deployment = result.deployment;
+                                 vm.deploymentAppImage = result.deploymentAppImage;
+                                 vm.deploymentAppImageName = result.deploymentAppImageName;
+                                 vm.deploymentImages = result.deploymentImages;
+                               }))
+                      .finally(function () {
+                        vm.loading = false;
+                      });
+      }
     },
     created: function () {
-      const vm = this;
-      deploymentService
-        .get(vm.name)
-        .then(function (deployment) {
-          vm.deployment = deployment;
-          let promises = vm.deployment
-                           .containers
-                           .map(function (container) {
-                             let containerImageParts = container.image.split(':');
-                             let containerName = containerImageParts[0];
-                             let containerVersion = containerImageParts[1];
-                             return imagesService
-                               .getByVersion(containerName, containerVersion)
-                               .then(function (image) {
-                                 if (image) {
-                                   vm.deploymentAppImage = image;
-                                   vm.deploymentAppImageName = image.name;
-                                   return imagesService
-                                     .get(containerName)
-                                     .then(function (list) {
-                                       list.forEach(function (image) {
-                                         image.age = moment(image.metadata["created-at"]).fromNow();
-                                       });
-                                       vm.deploymentImages = list;
-                                     });
-                                 }
-                               })
-                           });
-          return Promise.all(promises);
-        })
-        .finally(function () {
-          vm.loading = false;
-        })
-      ;
-
+      this.fetchData();
     },
     components: {
       accordion,
@@ -127,3 +132,38 @@
     }
   };
 </script>
+
+<style scoped>
+
+  .deployed{
+    display: inline-block;
+    margin-bottom: 0;
+    text-align: center;
+    vertical-align: middle;
+    background-color:#5cb85c;
+    color:#fff;
+    font-weight: 500;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.42857;
+    border-radius: 4px;
+  }
+
+  .btn-github {
+    padding: 0 3px;
+    margin: 0 5px;
+    display: inline-block;
+  }
+
+  .btn-github img {
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+  }
+
+  .label-github a {
+    color: white;
+  }
+</style>
