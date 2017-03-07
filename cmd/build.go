@@ -10,15 +10,15 @@ var buildCmd = &cobra.Command{
 	Short: "Wrapper around `docker build` to produce Docker artifacts as well as register data with gzr",
 	Long:  `Wrapper around "docker build" to produce Docker artifacts as well as register data with gzr`,
 	Run: func(cmd *cobra.Command, args []string) {
-		builder := comms.NewDockerBuilder()
-		err := buildImage(args, builder)
+		manager := comms.NewDockerManager()
+		err := buildHandler(args, manager)
 		if err != nil {
 			er(err.Error())
 		}
 	},
 }
 
-func buildImage(args []string, builder comms.ImageBuilder) error {
+func buildHandler(args []string, builder comms.ImageManager) error {
 	err := builder.Build(args...)
 	if err != nil {
 		return err

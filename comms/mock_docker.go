@@ -1,14 +1,14 @@
 package comms
 
-type MockBuilder struct {
+type MockManager struct {
 	OnBuild func(...string) error
 	OnPush  func(string) error
 }
 
-func (mock *MockBuilder) Build(args ...string) error {
+func (mock *MockManager) Build(args ...string) error {
 	return mock.OnBuild(args...)
 }
 
-func (mock *MockBuilder) Push(name string) error {
+func (mock *MockManager) Push(name string) error {
 	return mock.OnPush(name)
 }

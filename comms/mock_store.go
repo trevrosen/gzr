@@ -1,11 +1,12 @@
 package comms
 
 type MockStore struct {
-	OnStore   func(string, ImageMetadata) error
-	OnList    func(string) (*ImageList, error)
-	OnCleanup func()
-	OnDelete  func(string) error
-	OnGet     func(string) (*Image, error)
+	OnStore          func(string, ImageMetadata) error
+	OnList           func(string) (*ImageList, error)
+	OnCleanup        func()
+	OnDelete         func(string) error
+	OnGet            func(string) (*Image, error)
+	OnNewTransaction func() (StorageTransaction, error)
 }
 
 func (mock *MockStore) Store(imageName string, meta ImageMetadata) error {
@@ -26,4 +27,8 @@ func (mock *MockStore) Delete(imageName string) error {
 
 func (mock *MockStore) Get(imageName string) (*Image, error) {
 	return mock.OnGet(imageName)
+}
+
+func (mock *MockStore) NewTransaction() (StorageTransaction, error) {
+	return mock.OnNewTransaction()
 }

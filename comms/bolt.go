@@ -20,6 +20,10 @@ type BoltStorage struct {
 	DB *bolt.DB
 }
 
+type BoltTransaction struct {
+	txn *bolt.Tx
+}
+
 // NewBoltStorage initializes a BoltDB connection, makes sure the correct buckets exist,
 // and returns a BoltStorage pointer with the established connection
 func NewBoltStorage() (GzrMetadataStore, error) {
@@ -126,6 +130,15 @@ func (store *BoltStorage) Get(imageName string) (*Image, error) {
 	return image, nil
 }
 
+// NewTransaction returns a new BoltTransaction
+func (store *BoltStorage) NewTransaction() (StorageTransaction, error) {
+	bTxn, err := store.DB.Begin(true)
+	if err != nil {
+		return nil, err
+	}
+	return &BoltTransaction{txn: bTxn}, nil
+}
+
 // createKey creates the key used to tag data in Bolt
 func (store *BoltStorage) createKey(imageName string) ([]byte, error) {
 	splitName := strings.Split(imageName, ":")
@@ -142,4 +155,8 @@ func (store *BoltStorage) extractImage(data []byte, key []byte) *Image {
 	var meta ImageMetadata
 	json.Unmarshal(data, &meta)
 	return &Image{Name: string(key), Meta: meta}
+}
+
+func (bTxn *BoltTransaction) Commit() error {
+	return bTxn.txn.Commit()
 }

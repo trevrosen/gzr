@@ -18,6 +18,12 @@ type EtcdStorage struct {
 	KV     clientv3.KV
 }
 
+// EtcdTransaction implements StorageTransaction and maintains an
+// etcd transaction
+type EtcdTransaction struct {
+	txn clientv3.Txn
+}
+
 // NewEtcdStorage initializes and returns a pointer to an EtcdStorage
 // with a connected Client and KV
 func NewEtcdStorage() (GzrMetadataStore, error) {
@@ -89,6 +95,12 @@ func (store *EtcdStorage) Get(imageName string) (*Image, error) {
 	return store.extractImage(resp.Kvs[0].Value, resp.Kvs[0].Key), nil
 }
 
+// NewTransaction returns a new EtcdTransaction
+func (store *EtcdStorage) NewTransaction() (StorageTransaction, error) {
+	eTxn := store.KV.Txn(context.Background())
+	return &EtcdTransaction{txn: eTxn}, nil
+}
+
 // extractImage transforms raw []byte of metadata and key into a full Image
 func (store *EtcdStorage) extractImage(data []byte, key []byte) *Image {
 	var meta ImageMetadata
@@ -117,4 +129,10 @@ func (store *EtcdStorage) createKey(imageName string) (string, error) {
 	now := time.Now()
 	nowString := fmt.Sprintf("%d%d%d", now.Year(), now.Month(), now.Day())
 	return fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], nowString), nil
+}
+
+func (eTxn *EtcdTransaction) Commit() error {
+	_, err := eTxn.txn.Commit()
+	// TODO: Check response for errors
+	return err
 }

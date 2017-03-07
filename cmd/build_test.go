@@ -18,11 +18,11 @@ func TestBuildImage(t *testing.T) {
 	imageStore = &comms.MockStore{
 		OnStore: callStore,
 	}
-	builder := &comms.MockBuilder{
+	manager := &comms.MockManager{
 		OnBuild: callBuild,
 		OnPush:  callPush,
 	}
-	err := buildImage([]string{}, builder)
+	err := buildHandler([]string{}, manager)
 	if err != nil {
 		t.Errorf("buildImage errored with %s", err.Error())
 	}

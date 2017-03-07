@@ -21,6 +21,12 @@ type GzrMetadataStore interface {
 	Delete(string) error
 	// Get gets a single image with a version
 	Get(string) (*Image, error)
+	// NewTransaction returns a new StorageTransaction
+	NewTransaction() (StorageTransaction, error)
+}
+
+type StorageTransaction interface {
+	Commit() error
 }
 
 // Image is a struct unifying an image name with its metadata

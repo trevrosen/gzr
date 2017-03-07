@@ -10,18 +10,22 @@ import (
 	"github.com/spf13/viper"
 )
 
-type ImageBuilder interface {
+// ImageManager is an interface for building an application's image
+type ImageManager interface {
 	Build(...string) error
 	Push(string) error
 }
 
-type DockerBuilder struct{}
+// DockerManager implements ImageManager in order to manage images for Docker
+type DockerManager struct{}
 
-func NewDockerBuilder() *DockerBuilder {
-	return &DockerBuilder{}
+// NewDockerManager returns a pointer to an initialized DockerManager
+func NewDockerManager() *DockerManager {
+	return &DockerManager{}
 }
 
-func (docker *DockerBuilder) Build(args ...string) error {
+// Build takes a series of arguments to be sent to Docker and builds an image
+func (docker *DockerManager) Build(args ...string) error {
 	tag, err := GetDockerTag()
 	if err != nil {
 		return err
@@ -37,7 +41,8 @@ func (docker *DockerBuilder) Build(args ...string) error {
 	return nil
 }
 
-func (docker *DockerBuilder) Push(name string) error {
+// Push takes a name and pushes this to Docker
+func (docker *DockerManager) Push(name string) error {
 	push := exec.Command("docker", "push", name)
 	push.Stdout = os.Stdout
 	push.Stderr = os.Stderr
@@ -49,6 +54,9 @@ func (docker *DockerBuilder) Push(name string) error {
 	return nil
 }
 
+// GetDockerTag combines a configured Docker repository name, the current workdinig directory,
+// the current time, and a git hash to create a Docker tag appropriate to gzr
+// Output format: `repository/$CWD:YYYYMMDD.SHORT_HASH`
 func GetDockerTag() (string, error) {
 	hash, err := getCommitHash()
 	if err != nil {
