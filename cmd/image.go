@@ -10,11 +10,33 @@ import (
 
 	"github.com/bypasslane/gzr/comms"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var imageCmd = &cobra.Command{
 	Use:   "image (store|get|delete)",
 	Short: "manage information about images",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		storeType := viper.GetString("datastore.type")
+		if storeType == "" {
+			er("Must supply a datastore type in config file")
+		}
+
+		var storeCreator func() (comms.GzrMetadataStore, error)
+		if creator, ok := registeredInterfaces[storeType]; !ok {
+			er(fmt.Sprintf("%s is not a valid datastore type", storeType))
+		} else {
+			storeCreator = creator
+		}
+		newStore, err := storeCreator()
+		if err != nil {
+			er(fmt.Sprintf("%s", err.Error()))
+		}
+		imageStore = newStore
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		imageStore.Cleanup()
+	},
 }
 
 var storeCmd = &cobra.Command{

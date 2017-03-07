@@ -21,27 +21,6 @@ var RootCmd = &cobra.Command{
 	Use:   "gzr",
 	Short: "A toolkit for managing Kubernetes Deployments",
 	Long:  `Create, interrogate, and annotate container-based Deployment resources`,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		storeType := viper.GetString("datastore.type")
-		if storeType == "" {
-			er("Must supply a datastore type in config file")
-		}
-
-		var storeCreator func() (comms.GzrMetadataStore, error)
-		if creator, ok := registeredInterfaces[storeType]; !ok {
-			er(fmt.Sprintf("%s is not a valid datastore type", storeType))
-		} else {
-			storeCreator = creator
-		}
-		newStore, err := storeCreator()
-		if err != nil {
-			er(fmt.Sprintf("%s", err.Error()))
-		}
-		imageStore = newStore
-	},
-	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		imageStore.Cleanup()
-	},
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
