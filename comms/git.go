@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func BuildMetadata() (ImageMetadata, error) {
+func NewImageMetadata() (ImageMetadata, error) {
 	meta := ImageMetadata{}
 	tags, annotations, err := getTagsAndAnnotations()
 	if err != nil {

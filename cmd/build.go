@@ -49,7 +49,7 @@ func buildHandler(args []string, manager comms.ImageManager) error {
 	if err != nil {
 		return err
 	}
-	meta, err := comms.BuildMetadata()
+	meta, err := comms.NewImageMetadata()
 	if err != nil {
 		return err
 	}
