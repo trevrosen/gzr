@@ -7,16 +7,23 @@ import (
 )
 
 var (
-	buildCalled bool
-	pushCalled  bool
-	storeCalled bool
+	buildCalled  bool
+	pushCalled   bool
+	storeCalled  bool
+	startCalled  bool
+	commitCalled bool
 )
 
 func TestBuildImage(t *testing.T) {
 	buildCalled = false
 	pushCalled = false
+	storeCalled = false
+	startCalled = false
+	commitCalled = false
 	imageStore = &comms.MockStore{
-		OnStore: callStore,
+		OnStore:             callStore,
+		OnStartTransaction:  callStart,
+		OnCommitTransaction: callCommit,
 	}
 	manager := &comms.MockManager{
 		OnBuild: callBuild,
@@ -40,5 +47,15 @@ func callPush(name string) error {
 
 func callStore(name string, meta comms.ImageMetadata) error {
 	storeCalled = true
+	return nil
+}
+
+func callStart() error {
+	startCalled = true
+	return nil
+}
+
+func callCommit() error {
+	commitCalled = true
 	return nil
 }

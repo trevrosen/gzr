@@ -22,6 +22,10 @@ var imageCmd = &cobra.Command{
 			er("Must supply a datastore type in config file")
 		}
 
+		if viper.GetString("repository") == "" {
+			er("Must provide \"repository\" setting in config file")
+		}
+
 		var storeCreator func() (comms.GzrMetadataStore, error)
 		if creator, ok := registeredInterfaces[storeType]; !ok {
 			er(fmt.Sprintf("%s is not a valid datastore type", storeType))
@@ -83,7 +87,8 @@ including all versions held within gzr`,
 		if len(args) < 1 {
 			erBadUsage(fmt.Sprintf("Must provide IMAGE_NAME"), cmd)
 		}
-		images, err := imageStore.List(args[0])
+		name := fmt.Sprintf("%s/%s", viper.GetString("repository"), args[0])
+		images, err := imageStore.List(name)
 		if err != nil {
 			er(fmt.Sprintf("Error: %s", err.Error()))
 		}

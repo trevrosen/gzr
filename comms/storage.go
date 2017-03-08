@@ -21,11 +21,16 @@ type GzrMetadataStore interface {
 	Delete(string) error
 	// Get gets a single image with a version
 	Get(string) (*Image, error)
-	// NewTransaction returns a new StorageTransaction
-	NewTransaction() (StorageTransaction, error)
+	// StartTransaction starts a new transaction within the GzrMetadataStore
+	StartTransaction() error
+	// CommitTransaction commits the active transaction
+	CommitTransaction() error
 }
 
+// StorageTransaction is an interface to manage transactions around storage
+// concerns
 type StorageTransaction interface {
+	// Commit persists the operations from the transaction
 	Commit() error
 }
 

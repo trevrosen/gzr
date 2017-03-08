@@ -15,26 +15,22 @@ const (
 	ImageBucket = "images"
 )
 
-// BoltStorage implements GzrMetadataStore and has an exported bolt.DB pointer
+// BoltStorage implements GzrMetadataStore and has an un-exported bolt.db pointer
 type BoltStorage struct {
-	DB *bolt.DB
-}
-
-type BoltTransaction struct {
-	txn *bolt.Tx
+	db        *bolt.DB
+	activeTxn *bolt.Tx
 }
 
 // NewBoltStorage initializes a BoltDB connection, makes sure the correct buckets exist,
 // and returns a BoltStorage pointer with the established connection
 func NewBoltStorage() (GzrMetadataStore, error) {
-	store := &BoltStorage{}
 	dbPath := viper.GetString("datastore.db_path")
 	db, err := bolt.Open(dbPath, 0600, nil)
 	if err != nil {
 		return nil, err
 	}
-	store.DB = db
-	txn, err := store.DB.Begin(true)
+	store := &BoltStorage{db: db}
+	txn, err := store.db.Begin(true)
 	if err != nil {
 		store.Cleanup()
 		return nil, err
@@ -55,7 +51,7 @@ func NewBoltStorage() (GzrMetadataStore, error) {
 // List queries the Bolt store for all images stored under a particular name
 func (store *BoltStorage) List(imageName string) (*ImageList, error) {
 	var images []*Image
-	err := store.DB.View(func(tx *bolt.Tx) error {
+	err := store.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ImageBucket))
 		c := b.Cursor()
 		prefix := []byte(imageName)
@@ -73,32 +69,30 @@ func (store *BoltStorage) List(imageName string) (*ImageList, error) {
 
 // Store stores the metadata about an image associated with its name
 func (store *BoltStorage) Store(imageName string, meta ImageMetadata) error {
-	return store.DB.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(ImageBucket))
-		data, err := json.Marshal(meta)
-		if err != nil {
-			return err
-		}
-		key, err := store.createKey(imageName)
-		if err != nil {
-			return err
-		}
-		err = b.Put(key, data)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	b := store.activeTxn.Bucket([]byte(ImageBucket))
+	data, err := json.Marshal(meta)
+	if err != nil {
+		return err
+	}
+	key, err := store.createKey(imageName)
+	if err != nil {
+		return err
+	}
+	err = b.Put(key, data)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Cleanup closes the Bolt connection
 func (store *BoltStorage) Cleanup() {
-	store.DB.Close()
+	store.db.Close()
 }
 
 // Delete deletes all information related to IMAGE_NAME:VERSION
 func (store *BoltStorage) Delete(imageName string) error {
-	return store.DB.Update(func(tx *bolt.Tx) error {
+	return store.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ImageBucket))
 		c := b.Cursor()
 		prefix := []byte(imageName)
@@ -115,7 +109,7 @@ func (store *BoltStorage) Delete(imageName string) error {
 // Get returns a single image based on a name
 func (store *BoltStorage) Get(imageName string) (*Image, error) {
 	var image *Image
-	err := store.DB.View(func(tx *bolt.Tx) error {
+	err := store.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ImageBucket))
 		c := b.Cursor()
 		prefix := []byte(imageName)
@@ -130,13 +124,19 @@ func (store *BoltStorage) Get(imageName string) (*Image, error) {
 	return image, nil
 }
 
-// NewTransaction returns a new BoltTransaction
-func (store *BoltStorage) NewTransaction() (StorageTransaction, error) {
-	bTxn, err := store.DB.Begin(true)
+// StartTransaction starts a new Bolt transaction and adds it to the Storage
+func (store *BoltStorage) StartTransaction() error {
+	bTxn, err := store.db.Begin(true)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &BoltTransaction{txn: bTxn}, nil
+	store.activeTxn = bTxn
+	return nil
+}
+
+// CommitTransaction commits the active transaction
+func (store *BoltStorage) CommitTransaction() error {
+	return store.activeTxn.Commit()
 }
 
 // createKey creates the key used to tag data in Bolt
@@ -155,8 +155,4 @@ func (store *BoltStorage) extractImage(data []byte, key []byte) *Image {
 	var meta ImageMetadata
 	json.Unmarshal(data, &meta)
 	return &Image{Name: string(key), Meta: meta}
-}
-
-func (bTxn *BoltTransaction) Commit() error {
-	return bTxn.txn.Commit()
 }
