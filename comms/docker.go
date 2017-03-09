@@ -58,15 +58,16 @@ func (docker *DockerManager) Push(name string) error {
 // the current time, and a git hash to create a Docker tag appropriate to gzr
 // Output format: `repository/$CWD:YYYYMMDD.SHORT_HASH`
 func GetDockerTag() (string, error) {
-	hash, err := getCommitHash()
+	path, err := os.Getwd()
 	if err != nil {
 		return "", err
 	}
-	imageName, err := os.Getwd()
+	gm := NewLocalGitManager(path)
+	hash, err := gm.CommitHash()
 	if err != nil {
 		return "", err
 	}
-	splitImageName := strings.Split(imageName, "/")
-	name := splitImageName[len(splitImageName)-1]
+	imageName := strings.Split(path, "/")
+	name := imageName[len(imageName)-1]
 	return fmt.Sprintf("%s/%s:%s.%s", viper.GetString("repository"), name, time.Now().Format("20060102"), hash), nil
 }

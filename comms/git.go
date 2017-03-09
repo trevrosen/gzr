@@ -1,28 +1,49 @@
 package comms
 
 import (
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 	"time"
 )
 
+// GitManager is an interface to retrieve data from a git repo
+type GitManager interface {
+	CommitHash() (string, error)
+	Remote() (string, error)
+	Tags() ([]string, []string, error)
+	SetPath(string)
+	GetPath() string
+}
+
+// LocalGitManager implements GitManager
+type LocalGitManager struct {
+	path string
+}
+
+// NewImageMetadata returns a populated ImageMetadata based on a LocalGitManager
 func NewImageMetadata() (ImageMetadata, error) {
 	meta := ImageMetadata{}
-	tags, annotations, err := getTagsAndAnnotations()
+	path, err := os.Getwd()
+	if err != nil {
+		return meta, err
+	}
+	gm := NewLocalGitManager(path)
+	tags, annotations, err := gm.Tags()
 	if err != nil {
 		return meta, err
 	}
 	meta.GitTag = tags
 	meta.GitAnnotation = annotations
 
-	remote, err := getRemote()
+	remote, err := gm.Remote()
 	if err != nil {
 		return meta, err
 	}
 	meta.GitOrigin = remote
 
-	hash, err := getCommitHash()
+	hash, err := gm.CommitHash()
 	if err != nil {
 		return meta, err
 	}
@@ -33,7 +54,29 @@ func NewImageMetadata() (ImageMetadata, error) {
 	return meta, nil
 }
 
-func getCommitHash() (string, error) {
+// NewLocalGitManager returns a pointer to an intialized LocalGitManager and takes a `path`
+func NewLocalGitManager(path ...string) *LocalGitManager {
+	var thePath string
+	if path != nil {
+		thePath = path[0]
+	}
+	return &LocalGitManager{path: thePath}
+}
+
+// CommitHash returns the commit hash of a git repo at either the set path or current
+// working directory
+func (gm *LocalGitManager) CommitHash() (string, error) {
+	if gm.path != "" {
+		oldPath, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		err = os.Chdir(gm.path)
+		if err != nil {
+			return "", err
+		}
+		defer os.Chdir(oldPath)
+	}
 	hashCmd := exec.Command("git", "rev-parse", "HEAD")
 
 	hash, err := hashCmd.CombinedOutput()
@@ -45,7 +88,20 @@ func getCommitHash() (string, error) {
 	return stripped, nil
 }
 
-func getRemote() (string, error) {
+// Remote returns the remote of a git repo at either the set path or current
+// working directory
+func (gm *LocalGitManager) Remote() (string, error) {
+	if gm.path != "" {
+		oldPath, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		err = os.Chdir(gm.path)
+		if err != nil {
+			return "", err
+		}
+		defer os.Chdir(oldPath)
+	}
 	remoteCmd := exec.Command("git", "remote", "-v")
 	remote, err := remoteCmd.CombinedOutput()
 	if err != nil {
@@ -59,14 +115,27 @@ func getRemote() (string, error) {
 	return remotes[1], nil
 }
 
-func getTagsAndAnnotations() ([]string, []string, error) {
+// Tags returns the tags and accompanying annotations of a git repo at either
+// the set path or current working directory
+func (gm *LocalGitManager) Tags() ([]string, []string, error) {
+	if gm.path != "" {
+		oldPath, err := os.Getwd()
+		if err != nil {
+			return nil, nil, err
+		}
+		err = os.Chdir(gm.path)
+		if err != nil {
+			return nil, nil, err
+		}
+		defer os.Chdir(oldPath)
+	}
 	var tags []string
 	var annotations []string
 	currentTags := exec.Command("git", "tag", "--format", "%(refname:strip=2)~%(contents:subject)", "-l", "-n1", "--points-at", "HEAD")
 
 	tagInfo, err := currentTags.CombinedOutput()
 	if err != nil {
-		return []string{}, []string{}, err
+		return nil, nil, err
 	}
 	regex, _ := regexp.Compile("\n\n")
 	tagInfo_ := regex.ReplaceAllString(string(tagInfo), "\n")
