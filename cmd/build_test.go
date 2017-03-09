@@ -14,7 +14,8 @@ var (
 	commitCalled bool
 )
 
-func TestBuildImage(t *testing.T) {
+// TestBuildHandler just ensures that all the correct functions are called
+func TestBuildHandler(t *testing.T) {
 	buildCalled = false
 	pushCalled = false
 	storeCalled = false
@@ -31,7 +32,10 @@ func TestBuildImage(t *testing.T) {
 	}
 	err := buildHandler([]string{}, manager)
 	if err != nil {
-		t.Errorf("buildImage errored with %s", err.Error())
+		t.Errorf("buildHandler errored with %s", err.Error())
+	}
+	if !buildCalled || !pushCalled || !storeCalled || !startCalled || commitCalled {
+		t.Errorf("buildHandler did not call the correct functions")
 	}
 }
 

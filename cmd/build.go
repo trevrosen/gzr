@@ -44,6 +44,10 @@ var buildCmd = &cobra.Command{
 	},
 }
 
+// buildHander handles the arguments from running a build command.
+// The steps involved are as follows: Build image, create the metadata blob
+// that accompanies the image, create the tag for docker, use a transaction
+// to store the metadata and push the image
 func buildHandler(args []string, manager comms.ImageManager) error {
 	err := manager.Build(args...)
 	if err != nil {
