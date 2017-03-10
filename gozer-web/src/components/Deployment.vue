@@ -40,7 +40,7 @@
                 </div>
                 <div class="col-xs-2">
                   <button class="btn btn-primary" v-if="image.name !== deploymentAppImageName" @click="doDeploy(image)">Deploy</button>
-                  <span class="deployed" v-else><span class="glyphicon glyphicon-saved text-success"></span> Deployed</span>
+                  <span class="live" v-else><span class="glyphicon glyphicon-saved text-success"></span> Live</span>
                 </div>
               </div>
 
@@ -135,7 +135,7 @@
 
 <style scoped>
 
-  .deployed{
+  .live{
     display: inline-block;
     margin-bottom: 0;
     text-align: center;
