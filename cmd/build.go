@@ -34,10 +34,16 @@ var buildCmd = &cobra.Command{
 			er(fmt.Sprintf("%s", err.Error()))
 		}
 		imageStore = newStore
+
+		buildEnv := viper.GetString("build_env")
+		if buildEnv == "test" {
+			imageManager = comms.NewDefaultMockManager()
+		} else {
+			imageManager = comms.NewDockerManager()
+		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		manager := comms.NewDockerManager()
-		err := buildHandler(args, manager)
+		err := buildHandler(args, imageManager)
 		if err != nil {
 			er(err.Error())
 		}
