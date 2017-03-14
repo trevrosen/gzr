@@ -35,6 +35,8 @@ We needed an easy way to manage deployments in a variety of contexts, thinking i
 
 `gzr web` stands up the web interface - See [Gozer Web Docs](https://github.com/bypasslane/gzr/blob/master/gozer-web/README.md)
 
+`gzr build` both builds a Docker image and pushes it to your repository and gzr's metadata store.
+
 
 ## Development
 

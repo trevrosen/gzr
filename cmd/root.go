@@ -10,12 +10,6 @@ import (
 
 var cfgFile string
 
-// imageStore available to all commands
-var imageStore comms.GzrMetadataStore
-
-// available interfaces for image storage
-var registeredInterfaces = make(map[string]func() (comms.GzrMetadataStore, error))
-
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "gzr",

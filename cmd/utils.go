@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/bypasslane/gzr/comms"
 	"github.com/spf13/cobra"
 )
 
@@ -12,6 +13,15 @@ var namespace string
 
 // webPort is the port that the web interface will run on
 var webPort int
+
+// imageStore is the backing for image data storage
+var imageStore comms.GzrMetadataStore
+
+// available interfaces for image storage
+var registeredInterfaces = make(map[string]func() (comms.GzrMetadataStore, error))
+
+// imageManager is the backing for image managing (building, pushing)
+var imageManager comms.ImageManager
 
 // er prints an error message and exits. Lifted from Cobra source.
 func er(msg interface{}) {

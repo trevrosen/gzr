@@ -14,8 +14,9 @@ import (
 // EtcdStorage implements GzrMetadataStore and has exported
 // Etcd clients and KV accessors
 type EtcdStorage struct {
-	Client *clientv3.Client
-	KV     clientv3.KV
+	Client    *clientv3.Client
+	KV        clientv3.KV
+	activeTxn clientv3.Txn
 }
 
 // NewEtcdStorage initializes and returns a pointer to an EtcdStorage
@@ -56,7 +57,7 @@ func (store *EtcdStorage) Store(imageName string, meta ImageMetadata) error {
 	if err != nil {
 		return err
 	}
-	_, err = store.KV.Put(context.Background(), key, string(data))
+	store.activeTxn = store.activeTxn.Then(clientv3.OpPut(key, string(data)))
 	if err != nil {
 		return err
 	}
@@ -69,9 +70,9 @@ func (store *EtcdStorage) Cleanup() {
 }
 
 // Delete deletes all information related to IMAGE_NAME:VERSION
-func (store *EtcdStorage) Delete(imageName string) error {
-	_, err := store.KV.Delete(context.Background(), imageName, clientv3.WithPrefix())
-	return err
+func (store *EtcdStorage) Delete(imageName string) (int, error) {
+	resp, err := store.KV.Delete(context.Background(), imageName, clientv3.WithPrefix())
+	return int(resp.Deleted), err
 }
 
 // Get returns a single image based on a name
@@ -87,6 +88,20 @@ func (store *EtcdStorage) Get(imageName string) (*Image, error) {
 		return nil, fmt.Errorf("Found multiple images for %s", imageName)
 	}
 	return store.extractImage(resp.Kvs[0].Value, resp.Kvs[0].Key), nil
+}
+
+// StartTransaction sets a new transaction on the EtcdStorage
+func (store *EtcdStorage) StartTransaction() error {
+	eTxn := store.KV.Txn(context.Background())
+	store.activeTxn = eTxn
+	return nil
+}
+
+// CommitTransaction commits the active transaction
+func (store *EtcdStorage) CommitTransaction() error {
+	_, err := store.activeTxn.Commit()
+	// TODO: Check response for errors
+	return err
 }
 
 // extractImage transforms raw []byte of metadata and key into a full Image
@@ -114,7 +129,6 @@ func (store *EtcdStorage) createKey(imageName string) (string, error) {
 	if len(splitName) != 2 {
 		return "", fmt.Errorf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon")
 	}
-	now := time.Now()
-	nowString := fmt.Sprintf("%d%d%d", now.Year(), now.Month(), now.Day())
-	return fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], nowString), nil
+	now := time.Now().Format("20060102")
+	return fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], now), nil
 }
