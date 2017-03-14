@@ -107,11 +107,12 @@ var deleteCmd = &cobra.Command{
 		if len(splitName) != 2 {
 			er(fmt.Sprintf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon"))
 		}
-		err := imageStore.Delete(args[0])
+		name := fmt.Sprintf("%s/%s", viper.GetString("repository"), args[0])
+		deleted, err := imageStore.Delete(name)
 		if err != nil {
 			er(fmt.Sprintf("%s", err.Error()))
 		}
-		fmt.Printf("Deleted %s\n", args[0])
+		fmt.Printf("Deleted %d\n", deleted)
 	},
 }
 

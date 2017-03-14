@@ -17,8 +17,8 @@ type GzrMetadataStore interface {
 	List(string) (*ImageList, error)
 	// Cleanup allows the storage backend to clean up any connections, etc
 	Cleanup()
-	// Delete deletes all images under a nmae
-	Delete(string) error
+	// Delete deletes all images under a nmae, returns number of deleted entries
+	Delete(string) (int, error)
 	// Get gets a single image with a version
 	Get(string) (*Image, error)
 	// StartTransaction starts a new transaction within the GzrMetadataStore

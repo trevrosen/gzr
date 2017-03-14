@@ -4,7 +4,7 @@ type MockStore struct {
 	OnStore             func(string, ImageMetadata) error
 	OnList              func(string) (*ImageList, error)
 	OnCleanup           func()
-	OnDelete            func(string) error
+	OnDelete            func(string) (int, error)
 	OnGet               func(string) (*Image, error)
 	OnStartTransaction  func() error
 	OnCommitTransaction func() error
@@ -22,7 +22,7 @@ func (mock *MockStore) Cleanup() {
 	mock.OnCleanup()
 }
 
-func (mock *MockStore) Delete(imageName string) error {
+func (mock *MockStore) Delete(imageName string) (int, error) {
 	return mock.OnDelete(imageName)
 }
 

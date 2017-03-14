@@ -70,9 +70,9 @@ func (store *EtcdStorage) Cleanup() {
 }
 
 // Delete deletes all information related to IMAGE_NAME:VERSION
-func (store *EtcdStorage) Delete(imageName string) error {
-	_, err := store.KV.Delete(context.Background(), imageName, clientv3.WithPrefix())
-	return err
+func (store *EtcdStorage) Delete(imageName string) (int, error) {
+	resp, err := store.KV.Delete(context.Background(), imageName, clientv3.WithPrefix())
+	return int(resp.Deleted), err
 }
 
 // Get returns a single image based on a name
@@ -129,7 +129,6 @@ func (store *EtcdStorage) createKey(imageName string) (string, error) {
 	if len(splitName) != 2 {
 		return "", fmt.Errorf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon")
 	}
-	now := time.Now()
-	nowString := fmt.Sprintf("%d%d%d", now.Year(), now.Month(), now.Day())
-	return fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], nowString), nil
+	now := time.Now().Format("20060102")
+	return fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], now), nil
 }

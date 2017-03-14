@@ -91,19 +91,19 @@ func (store *BoltStorage) Cleanup() {
 }
 
 // Delete deletes all information related to IMAGE_NAME:VERSION
-func (store *BoltStorage) Delete(imageName string) error {
-	return store.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(ImageBucket))
-		c := b.Cursor()
-		prefix := []byte(imageName)
-		for k, _ := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, _ = c.Next() {
-			err := b.Delete(k)
-			if err != nil {
-				return err
-			}
+func (store *BoltStorage) Delete(imageName string) (int, error) {
+	b := store.activeTxn.Bucket([]byte(ImageBucket))
+	c := b.Cursor()
+	prefix := []byte(imageName)
+	deleted := 0
+	for k, _ := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, _ = c.Next() {
+		err := b.Delete(k)
+		if err != nil {
+			return 0, err
 		}
-		return nil
-	})
+		deleted += 1
+	}
+	return deleted, nil
 }
 
 // Get returns a single image based on a name
@@ -145,9 +145,8 @@ func (store *BoltStorage) createKey(imageName string) ([]byte, error) {
 	if len(splitName) != 2 {
 		return []byte{}, fmt.Errorf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon")
 	}
-	now := time.Now()
-	nowString := fmt.Sprintf("%d%d%d", now.Year(), now.Month(), now.Day())
-	return []byte(fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], nowString)), nil
+	now := time.Now().Format("20060102")
+	return []byte(fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], now)), nil
 }
 
 // extractImage transforms raw []byte of metadata and key into a full Image
