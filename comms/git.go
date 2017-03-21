@@ -115,6 +115,20 @@ func (gm *LocalGitManager) Remote() (string, error) {
 	return remotes[1], nil
 }
 
+// RepoName returns the name of the repository extracted from the remote
+// TODO: support multiple remotes (by ignoring all but origin)
+// TODO: treat "origin" as a standard special case of remote that we will treat as the canonical name
+func (gm *LocalGitManager) RepoName() (string, error) {
+	origin, err := gm.Remote()
+
+	if err != nil {
+		return "", err
+	}
+
+	repoName := strings.Split(strings.Split(origin, ":")[1], "/")[1]
+	return repoName, nil
+}
+
 // Tags returns the tags and accompanying annotations of a git repo at either
 // the set path or current working directory
 func (gm *LocalGitManager) Tags() ([]string, []string, error) {
