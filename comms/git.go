@@ -1,6 +1,7 @@
 package comms
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
@@ -115,6 +116,29 @@ func (gm *LocalGitManager) Remote() (string, error) {
 	return remotes[1], nil
 }
 
+// RepoName returns the name of the repository extracted from the remote
+// TODO: support multiple remotes (by ignoring all but origin)
+// TODO: treat "origin" as a standard special case of remote that we will treat as the canonical name
+func (gm *LocalGitManager) RepoName() (string, error) {
+	origin, err := gm.Remote()
+
+	if err != nil {
+		return "", err
+	}
+
+	httpsRegex := regexp.MustCompile("^https://")
+	gitRegex := regexp.MustCompile("^git@")
+
+	if httpsRegex.MatchString(origin) {
+		return processHTTPRepoName(origin), nil
+	}
+
+	if gitRegex.MatchString(origin) {
+		return processGitRepoName(origin), nil
+	}
+	return "", fmt.Errorf("unknown Git scheme")
+}
+
 // Tags returns the tags and accompanying annotations of a git repo at either
 // the set path or current working directory
 func (gm *LocalGitManager) Tags() ([]string, []string, error) {
@@ -158,4 +182,19 @@ func (gm *LocalGitManager) Tags() ([]string, []string, error) {
 		}
 	}
 	return tags, annotations, nil
+}
+
+// processHTTPRepoName returns the name of the repo if it uses a form like https://github.com/foobar/bargaz.git
+func processHTTPRepoName(remote string) string {
+	pieces := strings.Split(remote, "/")
+	fullRepoName := pieces[len(pieces)-1]
+	golfed := strings.Replace(fullRepoName, ".git", "", -1)
+	return golfed
+}
+
+// processGitRepoName returns the name of the repo if it uses a form like git@github.com:foobar/bargaz.git
+func processGitRepoName(remote string) string {
+	fullRepoName := strings.Split(remote, "/")[1]
+	golfed := strings.Replace(fullRepoName, ".git", "", -1)
+	return golfed
 }

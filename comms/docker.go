@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -67,7 +66,12 @@ func GetDockerTag() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	imageName := strings.Split(path, "/")
-	name := imageName[len(imageName)-1]
+
+	name, err := gm.RepoName()
+
+	if err != nil {
+		return "", err
+	}
+
 	return fmt.Sprintf("%s/%s:%s.%s", viper.GetString("repository"), name, time.Now().Format("20060102"), hash), nil
 }
