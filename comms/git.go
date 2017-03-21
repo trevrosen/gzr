@@ -1,6 +1,7 @@
 package comms
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
@@ -125,8 +126,17 @@ func (gm *LocalGitManager) RepoName() (string, error) {
 		return "", err
 	}
 
-	repoName := strings.Split(strings.Split(origin, ":")[1], "/")[1]
-	return repoName, nil
+	httpsRegex := regexp.MustCompile("^https://")
+	gitRegex := regexp.MustCompile("^git@")
+
+	if httpsRegex.MatchString(origin) {
+		return processHTTPRepoName(origin), nil
+	}
+
+	if gitRegex.MatchString(origin) {
+		return processGitRepoName(origin), nil
+	}
+	return "", fmt.Errorf("unknown Git scheme")
 }
 
 // Tags returns the tags and accompanying annotations of a git repo at either
@@ -172,4 +182,19 @@ func (gm *LocalGitManager) Tags() ([]string, []string, error) {
 		}
 	}
 	return tags, annotations, nil
+}
+
+// processHTTPRepoName returns the name of the repo if it uses a form like https://github.com/foobar/bargaz.git
+func processHTTPRepoName(remote string) string {
+	pieces := strings.Split(remote, "/")
+	fullRepoName := pieces[len(pieces)-1]
+	golfed := strings.Replace(fullRepoName, ".git", "", -1)
+	return golfed
+}
+
+// processGitRepoName returns the name of the repo if it uses a form like git@github.com:foobar/bargaz.git
+func processGitRepoName(remote string) string {
+	fullRepoName := strings.Split(remote, "/")[1]
+	golfed := strings.Replace(fullRepoName, ".git", "", -1)
+	return golfed
 }
