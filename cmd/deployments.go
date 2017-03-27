@@ -116,7 +116,7 @@ func listDeploymentsHandler(namespace string) {
 }
 
 func init() {
-	deploymentsCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to look for Deployments in")
+	deploymentsCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "default", "namespace to look for Deployments in")
 	deploymentsCmd.AddCommand(deploymentsListCmd)
 	deploymentsCmd.AddCommand(deploymentGetCmd)
 	deploymentsCmd.AddCommand(deploymentUpdateCmd)
