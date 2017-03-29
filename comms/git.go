@@ -153,19 +153,26 @@ func (gm *LocalGitManager) Tags() ([]string, []string, error) {
 		}
 		defer os.Chdir(oldPath)
 	}
-	var tags []string
-	var annotations []string
-	currentTags := exec.Command("git", "tag", "-n2", "--points-at", "HEAD")
+	currentTags := exec.Command("git", "tag", "-n1", "--points-at", "HEAD")
 
-	tagInfo, err := currentTags.CombinedOutput()
+	rawTags, err := currentTags.CombinedOutput()
 	if err != nil {
 		return nil, nil, err
 	}
-	// TODO: Move this to a testable parsing function
-	regex, _ := regexp.Compile("\n\n")
-	tagInfo_ := regex.ReplaceAllString(string(tagInfo), "\n")
+	tags, annotations := processTags(string(rawTags))
+	return tags, annotations, nil
+}
 
-	splitTagInfo := strings.Split(tagInfo_, "\n")
+// processTags returns two slices of strings, the first indicating the tags
+// and the second indicating the annotations related to the current git
+// commit. The incoming rawString is expected to be formatted as each tag/annotation
+// pair being on its own line with the annotation beginning after the first
+// whitespace on the line. For example, "v1.0.0     annotation here"
+// (This is the equivalent to the output of `git tag -n1 --points-at HEAD`)
+func processTags(rawString string) ([]string, []string) {
+	var tags []string
+	var annotations []string
+	splitTagInfo := strings.Split(rawString, "\n")
 	for _, v := range splitTagInfo {
 		if v == "" {
 			continue
@@ -183,7 +190,7 @@ func (gm *LocalGitManager) Tags() ([]string, []string, error) {
 			tags = append(tags, tag)
 		}
 	}
-	return tags, annotations, nil
+	return tags, annotations
 }
 
 // processHTTPRepoName returns the name of the repo if it uses a form like https://github.com/foobar/bargaz.git
