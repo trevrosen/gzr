@@ -155,12 +155,13 @@ func (gm *LocalGitManager) Tags() ([]string, []string, error) {
 	}
 	var tags []string
 	var annotations []string
-	currentTags := exec.Command("git", "tag", "--format", "%(refname:strip=2)~%(contents:subject)", "-l", "-n1", "--points-at", "HEAD")
+	currentTags := exec.Command("git", "tag", "-n2", "--points-at", "HEAD")
 
 	tagInfo, err := currentTags.CombinedOutput()
 	if err != nil {
 		return nil, nil, err
 	}
+	// TODO: Move this to a testable parsing function
 	regex, _ := regexp.Compile("\n\n")
 	tagInfo_ := regex.ReplaceAllString(string(tagInfo), "\n")
 
@@ -169,10 +170,11 @@ func (gm *LocalGitManager) Tags() ([]string, []string, error) {
 		if v == "" {
 			continue
 		}
-		split := strings.Split(v, "~")
-		if len(split) == 2 {
+		r := regexp.MustCompile("[^\\s]+")
+		split := r.FindAllString(v, -1)
+		if len(split) > 1 {
 			tag := split[0]
-			annotation := split[1]
+			annotation := strings.Join(split[1:], " ")
 			tags = append(tags, tag)
 			annotations = append(annotations, annotation)
 		}
