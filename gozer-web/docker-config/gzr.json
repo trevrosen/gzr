@@ -1,0 +1,7 @@
+{
+    "datastore": {
+        "type": "bolt",
+        "db_path": "/root/.gzr/gzr.db"
+    },
+    "repository": "example"
+}
