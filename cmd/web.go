@@ -17,7 +17,7 @@ var webCmd = &cobra.Command{
 gzr web
 gzr web --port=<CUSTOM_PORT_NUMBER>
 	`,
-	PreRun: func(cmd *cobra.Command, args []string) {
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		var connErr error
 		k8sConn, connErr = comms.NewK8sConnection(namespace)
 		if connErr != nil {
@@ -25,9 +25,13 @@ gzr web --port=<CUSTOM_PORT_NUMBER>
 			msg := fmt.Sprintf("problem establishing k8s connection: %s", connErr)
 			er(msg)
 		}
+		setupImageStore()
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		bindAndRun()
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		imageStore.Cleanup()
 	},
 }
 

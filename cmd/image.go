@@ -17,26 +17,7 @@ var imageCmd = &cobra.Command{
 	Use:   "image (store|get|delete)",
 	Short: "manage information about images",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		storeType := viper.GetString("datastore.type")
-		if storeType == "" {
-			er("Must supply a datastore type in config file")
-		}
-
-		if viper.GetString("repository") == "" {
-			er("Must provide \"repository\" setting in config file")
-		}
-
-		var storeCreator func() (comms.GzrMetadataStore, error)
-		if creator, ok := registeredInterfaces[storeType]; !ok {
-			er(fmt.Sprintf("%s is not a valid datastore type", storeType))
-		} else {
-			storeCreator = creator
-		}
-		newStore, err := storeCreator()
-		if err != nil {
-			er(fmt.Sprintf("%s", err.Error()))
-		}
-		imageStore = newStore
+		setupImageStore()
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		imageStore.Cleanup()
@@ -70,9 +51,17 @@ The structure of the JSON at the METADATA_PATH should be as follows:
 		if err != nil {
 			er(fmt.Sprintf("%s", err.Error()))
 		}
+		err = imageStore.StartTransaction()
+		if err != nil {
+			er(fmt.Sprintf("%s", err.Error()))
+		}
 		err = imageStore.Store(args[0], meta)
 		if err != nil {
 			er(fmt.Sprintf("Error storring image: %s", err.Error()))
+		}
+		err = imageStore.CommitTransaction()
+		if err != nil {
+			er(fmt.Sprintf("%s", err.Error()))
 		}
 		fmt.Printf("Stored %s\n", args[0])
 	},
