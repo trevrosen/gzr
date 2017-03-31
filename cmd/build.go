@@ -29,6 +29,7 @@ var buildCmd = &cobra.Command{
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		imageStore.Cleanup()
 	},
+	DisableFlagParsing: true,
 }
 
 // buildHander handles the arguments from running a build command.
