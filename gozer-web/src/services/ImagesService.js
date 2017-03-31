@@ -5,26 +5,22 @@ import VueResource from 'vue-resource';
 
 Vue.use(VueResource);
 
-const storedContainersResource = Vue.resource('/static/images.json');
+const storedContainersResource = Vue.resource('/images{/name}{/version}');
 
 function get(name) {
-  return storedContainersResource.get({name: name}).then(function (res) {
-    if (name === "bypass/admin") {
+  return storedContainersResource
+    .get({name: name})
+    .then(function (res) {
       return res.data.images;
-    } else {
-      return []
-    }
-  });
+    });
 }
 
 function getByVersion(name, version) {
-  return get(name)
-    .then(function (images) {
-      return _.find(images, function (item) {
-        let nameParts = item.name.split(':');
-        return nameParts[1] === version;
-      })
-    })
+  return storedContainersResource
+    .get({name:name, version:version})
+    .then(function (res) {
+      return res.data;
+    });
 }
 
 export default {get, getByVersion}

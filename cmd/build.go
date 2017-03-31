@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/bypasslane/gzr/comms"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,27 +11,7 @@ var buildCmd = &cobra.Command{
 	Short: "Wrapper around `docker build` to produce Docker artifacts as well as register data with gzr",
 	Long:  `Wrapper around "docker build" to produce Docker artifacts as well as register data with gzr`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// TODO: Dry this for setup between build/image
-		storeType := viper.GetString("datastore.type")
-		if storeType == "" {
-			er("Must supply a datastore type in config file")
-		}
-
-		if viper.GetString("repository") == "" {
-			er("Must provide \"repository\" setting in config file")
-		}
-
-		var storeCreator func() (comms.GzrMetadataStore, error)
-		if creator, ok := registeredInterfaces[storeType]; !ok {
-			er(fmt.Sprintf("%s is not a valid datastore type", storeType))
-		} else {
-			storeCreator = creator
-		}
-		newStore, err := storeCreator()
-		if err != nil {
-			er(fmt.Sprintf("%s", err.Error()))
-		}
-		imageStore = newStore
+		setupImageStore()
 
 		buildEnv := viper.GetString("build_env")
 		if buildEnv == "test" {
@@ -48,6 +26,10 @@ var buildCmd = &cobra.Command{
 			er(err.Error())
 		}
 	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		imageStore.Cleanup()
+	},
+	DisableFlagParsing: true,
 }
 
 // buildHander handles the arguments from running a build command.

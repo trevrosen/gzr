@@ -1,16 +1,22 @@
 <template>
   <div id="app">
-    <router-view></router-view>
+    <transition name="fade">
+      <router-view></router-view>
+    </transition>
   </div>
 </template>
 
 <script>
+  import Promise from 'bluebird';
+
   export default {
-    name: 'app',
+    name: 'app'
   };
 </script>
 
 <style>
+  @import "app.less";
+
   #app {
     /*font-family: 'Avenir', Helvetica, Arial, sans-serif;*/
     -webkit-font-smoothing: antialiased;

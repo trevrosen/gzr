@@ -1,7 +1,9 @@
 <template>
   <div class="panel panel-default application-card">
     <div class="panel-heading">
-      <h3 class="panel-title">{{deploymentInternal.name}}
+      <h3 class="panel-title">
+        <router-link :to="'/deployment/' + deploymentInternal.name">{{deploymentInternal.name}}
+        </router-link>
         <span v-if="deploymentImageAge" class="label label-default pull-right">{{deploymentImageAge}}</span>
       </h3>
       <sub v-if="!!deploymentAppImage">{{deploymentAppImage.name}}</sub>
@@ -10,8 +12,8 @@
       <div v-if="!!deploymentAppImage">
         <a class="btn btn-default btn-github" :href="deploymentAppImage.metadata['git-origin'] + '/commit/' + deploymentAppImage.metadata['git-commit']"><img
           src="../img/GitHub-Mark-32px.png" alt="github"/></a>
-        <span class="label label-info label-github" v-for="tag in deploymentAppImage.metadata['git-tag'].split(',')">
-          <a :href="deploymentAppImage.metadata['git-origin'] + '/tree/' + tag"> {{tag}}</a>
+        <span class="label label-info label-github" v-for="tag in deploymentAppImage.metadata['git-tag']">
+          <a :href="deploymentAppImage.metadata['git-origin'] + '/tree/' + tag">{{tag}}</a>
         </span>
       </div>
       <div v-else-if="loading">

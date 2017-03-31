@@ -6,6 +6,7 @@ import (
 
 	"github.com/bypasslane/gzr/comms"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // Flag var for holding namespace info
@@ -39,4 +40,27 @@ func erBadUsage(msg string, cmd *cobra.Command) {
 // notify sends a formatted information line to stdout
 func notify(msg string) {
 	fmt.Printf("[-] %s\n", msg)
+}
+
+func setupImageStore() {
+	storeType := viper.GetString("datastore.type")
+	if storeType == "" {
+		er("Must supply a datastore type in config file")
+	}
+
+	if viper.GetString("repository") == "" {
+		er("Must provide \"repository\" setting in config file")
+	}
+
+	var storeCreator func() (comms.GzrMetadataStore, error)
+	if creator, ok := registeredInterfaces[storeType]; !ok {
+		er(fmt.Sprintf("%s is not a valid datastore type", storeType))
+	} else {
+		storeCreator = creator
+	}
+	newStore, err := storeCreator()
+	if err != nil {
+		er(fmt.Sprintf("%s", err.Error()))
+	}
+	imageStore = newStore
 }
