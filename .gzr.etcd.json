@@ -1,8 +1,8 @@
 {
-    "datastore": {
-        "type": "etcd",
-        "host": "http://localhost",
-        "port": 2379
-    },
-    "repository": "gzr-dev"
+  "datastore": {
+    "type": "etcd",
+    "host": "http://localhost",
+    "port": 2379
+  },
+  "repository": "gzr-dev"
 }
