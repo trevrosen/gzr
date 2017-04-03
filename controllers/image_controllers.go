@@ -22,7 +22,7 @@ func getImagesHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {
 
 		images, err := imageStore.List(name)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		if len(images.Images) == 0 {
@@ -32,7 +32,7 @@ func getImagesHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {
 
 		jsonData, err := images.SerializeForWire()
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
@@ -45,7 +45,7 @@ func getImageHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {
 		name := mux.Vars(r)["name"]
 		name, err := url.QueryUnescape(name)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		version := mux.Vars(r)["version"]
@@ -57,7 +57,7 @@ func getImageHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {
 
 		image, err := imageStore.Get(fmt.Sprintf("%s:%s", name, version))
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		// If empty Image, one wasn't found
@@ -68,7 +68,7 @@ func getImageHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {
 
 		jsonData, err := image.SerializeForWire()
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
