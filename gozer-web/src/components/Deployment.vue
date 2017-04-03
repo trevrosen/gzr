@@ -116,7 +116,7 @@
                                  vm.deploymentAppImageName = result.deploymentAppImageName;
                                  vm.deploymentImages = result.deploymentImages;
                                }))
-                      .catch(function () {})
+                      .catch(function (error) { console.log(error) })
                       .finally(function () {
                         vm.loading = false;
                       });
