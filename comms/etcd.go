@@ -84,7 +84,7 @@ func (store *EtcdStorage) Get(imageName string) (*Image, error) {
 	if len(resp.Kvs) == 0 {
 		return nil, nil
 	}
-	if len(resp.Kvs) >= 1 {
+	if len(resp.Kvs) > 1 {
 		return nil, fmt.Errorf("Found multiple images for %s", imageName)
 	}
 	return store.extractImage(resp.Kvs[0].Value, resp.Kvs[0].Key), nil
