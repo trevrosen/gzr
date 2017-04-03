@@ -76,7 +76,6 @@
   import Promise from 'bluebird';
 
   export default {
-    props: {name: {type: String}},
     data() {
       return {
         loading: true,
@@ -107,6 +106,10 @@
       },
       fetchData: function () {
         const vm = this;
+        vm.name =  vm.$route.params.name;
+
+        console.log(vm.$route)
+        console.log(vm)
         return Promise.delay(250,
                              deploymentService
                                .getDeploymentWithImageData(vm.name)
@@ -116,6 +119,9 @@
                                  vm.deploymentAppImageName = result.deploymentAppImageName;
                                  vm.deploymentImages = result.deploymentImages;
                                }))
+                      .catch(function () {
+
+                      })
                       .finally(function () {
                         vm.loading = false;
                       });

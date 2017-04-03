@@ -54,6 +54,7 @@
                            vm.deploymentImageAge = moment(image.metadata["created-at"]).fromNow();
                          }
                        })
+                       .catch(function(){})
                        .finally(function () {
                          vm.loading = false;
                        })
