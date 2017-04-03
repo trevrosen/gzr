@@ -46,7 +46,7 @@ function list() {
 function get(name) {
   return  deploymentsResource.get({name: name}).then(function (response) {
 
-    return transformDeploymentToViewObj(response.data.deployments[0]);
+    return transformDeploymentToViewObj(response.data);
   })
 }
 
