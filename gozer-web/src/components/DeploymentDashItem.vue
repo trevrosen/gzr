@@ -54,7 +54,7 @@
                            vm.deploymentImageAge = moment(image.metadata["created-at"]).fromNow();
                          }
                        })
-                       .catch(function (error) { console.log(error) })
+                       .catch(function (error) { if (error && error.status !== 404) {console.log(error) }})
                        .finally(function () {
                          vm.loading = false;
                        })
