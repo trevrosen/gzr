@@ -19,7 +19,7 @@ type UpdateDeploymentUserType struct {
 // listDeploymentsHandler lists deployments in the Kubernetes instance
 func listDeploymentsHandler(k8sConn comms.K8sCommunicator) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		deployments, err := k8sConn.ListDeployments(k8sConn.GetNamespace())
+		deployments, err := k8sConn.ListDeployments()
 		// TODO: differentiate between legit errors and unhandleable errors
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -51,7 +51,7 @@ func getDeploymentHandler(k8sConn comms.K8sCommunicator) http.HandlerFunc {
 			log.Println("name param required for this path")
 			w.WriteHeader(http.StatusBadRequest)
 		}
-		deployment, err := k8sConn.GetDeployment(k8sConn.GetNamespace(), name)
+		deployment, err := k8sConn.GetDeployment(name)
 
 		if err == comms.ErrDeploymentNotFound {
 			w.WriteHeader(http.StatusNotFound)
@@ -82,7 +82,7 @@ func updateDeploymentHandler(k8sConn comms.K8sCommunicator) http.HandlerFunc {
 			log.Println("name param required for this path")
 			w.WriteHeader(http.StatusBadRequest)
 		}
-		deployment, err = k8sConn.GetDeployment(k8sConn.GetNamespace(), name)
+		deployment, err = k8sConn.GetDeployment(name)
 
 		if err == comms.ErrDeploymentNotFound {
 			log.Println(err)

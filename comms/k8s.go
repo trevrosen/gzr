@@ -51,9 +51,9 @@ type DeploymentContainerInfo struct {
 // K8sCommunicator defines an interface for retrieving data from a k8s cluster
 type K8sCommunicator interface {
 	// ListDeployments returns the list of Deployments in the cluster
-	ListDeployments(string) (*GzrDeploymentList, error)
+	ListDeployments() (*GzrDeploymentList, error)
 	// GetDeployment returns the Deployment matching the given name
-	GetDeployment(string, string) (*GzrDeployment, error)
+	GetDeployment(string) (*GzrDeployment, error)
 	// UpdateDeployment updates the Deployment's container in the manner specified by the argument
 	UpdateDeployment(*DeploymentContainerInfo) (*GzrDeployment, error)
 	// GetNamespace returns the namespace
@@ -94,9 +94,9 @@ func NewK8sConnection(namespace string) (*K8sConnection, error) {
 }
 
 // GetDeployment returns a GzrDeployment matching the deploymentName in the given namespace
-func (k *K8sConnection) GetDeployment(namespace string, deploymentName string) (*GzrDeployment, error) {
+func (k *K8sConnection) GetDeployment(deploymentName string) (*GzrDeployment, error) {
 	var gd *GzrDeployment
-	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(k.namespace).Get(deploymentName)
+	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(k.GetNamespace()).Get(deploymentName)
 	if err != nil {
 		return gd, err
 	}
@@ -150,9 +150,9 @@ func (k *K8sConnection) UpdateDeployment(dci *DeploymentContainerInfo) (*GzrDepl
 }
 
 // ListDeployments returns the active k8s Deployments for the given namespace
-func (k *K8sConnection) ListDeployments(namespace string) (*GzrDeploymentList, error) {
+func (k *K8sConnection) ListDeployments() (*GzrDeploymentList, error) {
 	var gzrDeploymentList GzrDeploymentList
-	deploymentList, err := k.clientset.ExtensionsV1beta1().Deployments(namespace).List(v1.ListOptions{})
+	deploymentList, err := k.clientset.ExtensionsV1beta1().Deployments(k.GetNamespace()).List(v1.ListOptions{})
 	if err != nil {
 		return &gzrDeploymentList, err
 	}
