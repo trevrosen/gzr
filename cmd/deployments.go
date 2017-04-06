@@ -59,7 +59,7 @@ deployments get mah-deployment
 		if len(args) < 1 {
 			erBadUsage("Not enough arguments", cmd)
 		}
-		getDeploymentHandler(namespace, args[0])
+		getDeploymentHandler(args[0])
 	},
 }
 
@@ -96,8 +96,8 @@ func updateDeploymentHandler(namespace string, deploymentName string, containerN
 }
 
 // getDeploymentHandler fetches
-func getDeploymentHandler(namespace string, deploymentName string) {
-	deployment, err := k8sConn.GetDeployment(namespace, deploymentName)
+func getDeploymentHandler(deploymentName string) {
+	deployment, err := k8sConn.GetDeployment(deploymentName)
 	if err != nil {
 		er(fmt.Sprintf("there was a problem retrieving deployment '%s'", deploymentName))
 	}
@@ -106,7 +106,7 @@ func getDeploymentHandler(namespace string, deploymentName string) {
 
 // listDeploymentsHandler fetches Deployments and prints them to the CLI
 func listDeploymentsHandler(namespace string) {
-	dlist, err := k8sConn.ListDeployments(namespace)
+	dlist, err := k8sConn.ListDeployments()
 	if err != nil {
 		log.Fatalln("Error retrieving Deployments: %s", err)
 	}

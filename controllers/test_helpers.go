@@ -8,19 +8,19 @@ import (
 	"github.com/bypasslane/gzr/comms"
 )
 
-func emptyDeploymentsList(namespace string) (*comms.GzrDeploymentList, error) {
+func emptyDeploymentsList() (*comms.GzrDeploymentList, error) {
 	return nil, nil
 }
 
-func populatedDeploymentsList(namespace string) (*comms.GzrDeploymentList, error) {
+func populatedDeploymentsList() (*comms.GzrDeploymentList, error) {
 	return &comms.GzrDeploymentList{}, nil
 }
 
-func emptyGetDeployment(namespace string, deploymentName string) (*comms.GzrDeployment, error) {
+func emptyGetDeployment(deploymentName string) (*comms.GzrDeployment, error) {
 	return nil, comms.ErrDeploymentNotFound
 }
 
-func populatedGetDeployment(namespace string, deploymentName string) (*comms.GzrDeployment, error) {
+func populatedGetDeployment(deploymentName string) (*comms.GzrDeployment, error) {
 	return &comms.GzrDeployment{}, nil
 }
 
