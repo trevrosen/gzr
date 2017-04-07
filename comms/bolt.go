@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/bradfitz/slice"
 	"github.com/spf13/viper"
 )
 
@@ -122,6 +123,18 @@ func (store *BoltStorage) Get(imageName string) (*Image, error) {
 		return &Image{}, err
 	}
 	return image, nil
+}
+
+// GetLatest returns the latest image from a name
+func (store *BoltStorage) GetLatest(imageName string) (*Image, error) {
+	images, err := store.List(imageName)
+	if err != nil {
+		return nil, err
+	}
+	slice.Sort(images.Images, func(i, j int) bool {
+		return images.Images[j].Meta.CreatedAt < images.Images[i].Meta.CreatedAt
+	})
+	return images.Images[0], nil
 }
 
 // StartTransaction starts a new Bolt transaction and adds it to the Storage

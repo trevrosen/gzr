@@ -21,6 +21,8 @@ type GzrMetadataStore interface {
 	Delete(string) (int, error)
 	// Get gets a single image with a version
 	Get(string) (*Image, error)
+	// GetLatest gets the most recent image from a name
+	GetLatest(string) (*Image, error)
 	// StartTransaction starts a new transaction within the GzrMetadataStore
 	StartTransaction() error
 	// CommitTransaction commits the active transaction
@@ -61,7 +63,7 @@ type ImageList struct {
 	Images []*Image `json:"images"`
 }
 
-// SerializeForCLI takes an io.Writer and writes templatized data to it representing an image list
+// SerializeForCLI takes an io.Writer and writes templatized data to it representing an ImageList
 func (l *ImageList) SerializeForCLI(wr io.Writer) error {
 	return l.cliTemplate().Execute(wr, l)
 }
@@ -88,6 +90,17 @@ func (l *ImageList) SerializeForWire() ([]byte, error) {
 // SerializeForWire returns a JSON representation of the Image
 func (i *Image) SerializeForWire() ([]byte, error) {
 	return json.Marshal(i)
+}
+
+// SerializeForCLI takes an io.Writer and writes templated data to it representing an Image
+func (l *Image) SerializeForCLI(wr io.Writer) error {
+	return l.cliTemplate().Execute(wr, l)
+}
+
+func (l *Image) cliTemplate() *template.Template {
+	t := template.New("Image")
+	t, _ = t.Parse(`{{.Name}}`)
+	return t
 }
 
 // CreateMeta takes a ReadWriter and returns an instance of ImageMetadata

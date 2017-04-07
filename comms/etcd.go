@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bradfitz/slice"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/spf13/viper"
 )
@@ -88,6 +89,18 @@ func (store *EtcdStorage) Get(imageName string) (*Image, error) {
 		return nil, fmt.Errorf("Found multiple images for %s", imageName)
 	}
 	return store.extractImage(resp.Kvs[0].Value, resp.Kvs[0].Key), nil
+}
+
+// GetLatest returns the latest image from a name
+func (store *EtcdStorage) GetLatest(imageName string) (*Image, error) {
+	images, err := store.List(imageName)
+	if err != nil {
+		return nil, err
+	}
+	slice.Sort(images.Images, func(i, j int) bool {
+		return images.Images[j].Meta.CreatedAt < images.Images[i].Meta.CreatedAt
+	})
+	return images.Images[0], nil
 }
 
 // StartTransaction sets a new transaction on the EtcdStorage
