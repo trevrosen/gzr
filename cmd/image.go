@@ -82,13 +82,13 @@ including all versions held within gzr`,
 		if latest {
 			image, err := imageStore.GetLatest(name)
 			if err != nil {
-				er(fmt.Sprintf("Error: %s", err.Error()))
+				er(fmt.Sprintf("%s", err.Error()))
 			}
 			image.SerializeForCLI(os.Stdout)
 		} else {
 			images, err := imageStore.List(name)
 			if err != nil {
-				er(fmt.Sprintf("Error: %s", err.Error()))
+				er(fmt.Sprintf("%s", err.Error()))
 			}
 			images.SerializeForCLI(os.Stdout)
 		}
