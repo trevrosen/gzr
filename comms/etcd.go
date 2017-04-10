@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
-	"time"
 
 	"github.com/bradfitz/slice"
 	"github.com/coreos/etcd/clientv3"
@@ -54,7 +52,7 @@ func (store *EtcdStorage) Store(imageName string, meta ImageMetadata) error {
 		return err
 	}
 
-	key, err := store.createKey(imageName)
+	key, err := createKey(imageName)
 	if err != nil {
 		return err
 	}
@@ -134,14 +132,4 @@ func (store *EtcdStorage) extractImages(resp *clientv3.GetResponse) (*ImageList,
 		images = append(images, store.extractImage(kv.Value, kv.Key))
 	}
 	return &ImageList{Images: images}, nil
-}
-
-// createKey creates the key used to tag data in etcd
-func (store *EtcdStorage) createKey(imageName string) (string, error) {
-	splitName := strings.Split(imageName, ":")
-	if len(splitName) != 2 {
-		return "", fmt.Errorf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon")
-	}
-	now := time.Now().Format("20060102")
-	return fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], now), nil
 }

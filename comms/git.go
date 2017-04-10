@@ -78,7 +78,7 @@ func (gm *LocalGitManager) CommitHash() (string, error) {
 		}
 		defer os.Chdir(oldPath)
 	}
-	hashCmd := exec.Command("git", "rev-parse", "HEAD")
+	hashCmd := exec.Command("git", "rev-parse", "--short", "HEAD")
 
 	hash, err := hashCmd.CombinedOutput()
 	if err != nil {

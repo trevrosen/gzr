@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"strings"
 )
 
 // GzrMetadataStore is the interface that should be implemented for any
@@ -117,4 +118,15 @@ func CreateMeta(reader io.ReadWriter) (ImageMetadata, error) {
 		return ImageMetadata{}, fmt.Errorf("Could not read metadata file: %s\nCheck the data types in your image metadata JSON.", err.Error())
 	}
 	return meta, nil
+}
+
+// createKey creates the key used to tag data in stores
+func createKey(imageName string) (string, error) {
+	splitName := strings.Split(imageName, ":")
+	if len(splitName) != 2 {
+		return "", fmt.Errorf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon")
+	}
+	name := fmt.Sprintf("%s:%s", splitName[0], splitName[1])
+	fmt.Println(name)
+	return name, nil
 }
