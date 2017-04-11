@@ -76,7 +76,7 @@ func (store *EtcdStorage) Delete(imageName string) (int, error) {
 
 // Get returns a single image based on a name
 func (store *EtcdStorage) Get(imageName string) (*Image, error) {
-	resp, err := store.KV.Get(context.Background(), fmt.Sprintf("%s:", imageName), clientv3.WithPrefix())
+	resp, err := store.KV.Get(context.Background(), fmt.Sprintf("%s", imageName), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
