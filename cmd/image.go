@@ -13,6 +13,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+var latest bool
+
 var imageCmd = &cobra.Command{
 	Use:   "image (store|get|delete)",
 	Short: "manage information about images",
@@ -77,11 +79,19 @@ including all versions held within gzr`,
 			erBadUsage(fmt.Sprintf("Must provide IMAGE_NAME"), cmd)
 		}
 		name := fmt.Sprintf("%s/%s", viper.GetString("repository"), args[0])
-		images, err := imageStore.List(name)
-		if err != nil {
-			er(fmt.Sprintf("Error: %s", err.Error()))
+		if latest {
+			image, err := imageStore.GetLatest(name)
+			if err != nil {
+				er(fmt.Sprintf("%s", err.Error()))
+			}
+			image.SerializeForCLI(os.Stdout)
+		} else {
+			images, err := imageStore.List(name)
+			if err != nil {
+				er(fmt.Sprintf("%s", err.Error()))
+			}
+			images.SerializeForCLI(os.Stdout)
 		}
-		images.SerializeForCLI(os.Stdout)
 	},
 }
 
@@ -114,6 +124,7 @@ var deleteCmd = &cobra.Command{
 }
 
 func init() {
+	getCmd.Flags().BoolVarP(&latest, "latest", "l", false, "option to just get the latest image")
 	imageCmd.AddCommand(storeCmd)
 	imageCmd.AddCommand(getCmd)
 	imageCmd.AddCommand(deleteCmd)

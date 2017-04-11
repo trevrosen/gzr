@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
-	"time"
 
+	"github.com/bradfitz/slice"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/spf13/viper"
 )
@@ -53,7 +52,7 @@ func (store *EtcdStorage) Store(imageName string, meta ImageMetadata) error {
 		return err
 	}
 
-	key, err := store.createKey(imageName)
+	key, err := createKey(imageName)
 	if err != nil {
 		return err
 	}
@@ -90,6 +89,18 @@ func (store *EtcdStorage) Get(imageName string) (*Image, error) {
 	return store.extractImage(resp.Kvs[0].Value, resp.Kvs[0].Key), nil
 }
 
+// GetLatest returns the latest image from a name
+func (store *EtcdStorage) GetLatest(imageName string) (*Image, error) {
+	images, err := store.List(imageName)
+	if err != nil {
+		return nil, err
+	}
+	slice.Sort(images.Images, func(i, j int) bool {
+		return images.Images[j].Meta.CreatedAt < images.Images[i].Meta.CreatedAt
+	})
+	return images.Images[0], nil
+}
+
 // StartTransaction sets a new transaction on the EtcdStorage
 func (store *EtcdStorage) StartTransaction() error {
 	eTxn := store.KV.Txn(context.Background())
@@ -121,14 +132,4 @@ func (store *EtcdStorage) extractImages(resp *clientv3.GetResponse) (*ImageList,
 		images = append(images, store.extractImage(kv.Value, kv.Key))
 	}
 	return &ImageList{Images: images}, nil
-}
-
-// createKey creates the key used to tag data in etcd
-func (store *EtcdStorage) createKey(imageName string) (string, error) {
-	splitName := strings.Split(imageName, ":")
-	if len(splitName) != 2 {
-		return "", fmt.Errorf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon")
-	}
-	now := time.Now().Format("20060102")
-	return fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], now), nil
 }

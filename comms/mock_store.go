@@ -6,6 +6,7 @@ type MockStore struct {
 	OnCleanup           func()
 	OnDelete            func(string) (int, error)
 	OnGet               func(string) (*Image, error)
+	OnGetLatest         func(string) (*Image, error)
 	OnStartTransaction  func() error
 	OnCommitTransaction func() error
 }
@@ -28,6 +29,10 @@ func (mock *MockStore) Delete(imageName string) (int, error) {
 
 func (mock *MockStore) Get(imageName string) (*Image, error) {
 	return mock.OnGet(imageName)
+}
+
+func (mock *MockStore) GetLatest(imageName string) (*Image, error) {
+	return mock.OnGetLatest(imageName)
 }
 
 func (mock *MockStore) StartTransaction() error {

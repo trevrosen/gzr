@@ -3,11 +3,9 @@ package comms
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"strings"
-	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/bradfitz/slice"
 	"github.com/spf13/viper"
 )
 
@@ -74,11 +72,11 @@ func (store *BoltStorage) Store(imageName string, meta ImageMetadata) error {
 	if err != nil {
 		return err
 	}
-	key, err := store.createKey(imageName)
+	key, err := createKey(imageName)
 	if err != nil {
 		return err
 	}
-	err = b.Put(key, data)
+	err = b.Put([]byte(key), data)
 	if err != nil {
 		return err
 	}
@@ -124,6 +122,18 @@ func (store *BoltStorage) Get(imageName string) (*Image, error) {
 	return image, nil
 }
 
+// GetLatest returns the latest image from a name
+func (store *BoltStorage) GetLatest(imageName string) (*Image, error) {
+	images, err := store.List(imageName)
+	if err != nil {
+		return nil, err
+	}
+	slice.Sort(images.Images, func(i, j int) bool {
+		return images.Images[j].Meta.CreatedAt < images.Images[i].Meta.CreatedAt
+	})
+	return images.Images[0], nil
+}
+
 // StartTransaction starts a new Bolt transaction and adds it to the Storage
 func (store *BoltStorage) StartTransaction() error {
 	bTxn, err := store.db.Begin(true)
@@ -137,16 +147,6 @@ func (store *BoltStorage) StartTransaction() error {
 // CommitTransaction commits the active transaction
 func (store *BoltStorage) CommitTransaction() error {
 	return store.activeTxn.Commit()
-}
-
-// createKey creates the key used to tag data in Bolt
-func (store *BoltStorage) createKey(imageName string) ([]byte, error) {
-	splitName := strings.Split(imageName, ":")
-	if len(splitName) != 2 {
-		return []byte{}, fmt.Errorf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon")
-	}
-	now := time.Now().Format("20060102")
-	return []byte(fmt.Sprintf("%s:%s:%s", splitName[0], splitName[1], now)), nil
 }
 
 // extractImage transforms raw []byte of metadata and key into a full Image

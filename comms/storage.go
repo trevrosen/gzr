@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"strings"
 )
 
 // GzrMetadataStore is the interface that should be implemented for any
@@ -21,6 +22,8 @@ type GzrMetadataStore interface {
 	Delete(string) (int, error)
 	// Get gets a single image with a version
 	Get(string) (*Image, error)
+	// GetLatest gets the most recent image from a name
+	GetLatest(string) (*Image, error)
 	// StartTransaction starts a new transaction within the GzrMetadataStore
 	StartTransaction() error
 	// CommitTransaction commits the active transaction
@@ -61,7 +64,7 @@ type ImageList struct {
 	Images []*Image `json:"images"`
 }
 
-// SerializeForCLI takes an io.Writer and writes templatized data to it representing an image list
+// SerializeForCLI takes an io.Writer and writes templatized data to it representing an ImageList
 func (l *ImageList) SerializeForCLI(wr io.Writer) error {
 	return l.cliTemplate().Execute(wr, l)
 }
@@ -90,6 +93,17 @@ func (i *Image) SerializeForWire() ([]byte, error) {
 	return json.Marshal(i)
 }
 
+// SerializeForCLI takes an io.Writer and writes templated data to it representing an Image
+func (l *Image) SerializeForCLI(wr io.Writer) error {
+	return l.cliTemplate().Execute(wr, l)
+}
+
+func (l *Image) cliTemplate() *template.Template {
+	t := template.New("Image")
+	t, _ = t.Parse(`{{.Name}}`)
+	return t
+}
+
 // CreateMeta takes a ReadWriter and returns an instance of ImageMetadata
 // after parsing
 func CreateMeta(reader io.ReadWriter) (ImageMetadata, error) {
@@ -104,4 +118,15 @@ func CreateMeta(reader io.ReadWriter) (ImageMetadata, error) {
 		return ImageMetadata{}, fmt.Errorf("Could not read metadata file: %s\nCheck the data types in your image metadata JSON.", err.Error())
 	}
 	return meta, nil
+}
+
+// createKey creates the key used to tag data in stores
+func createKey(imageName string) (string, error) {
+	splitName := strings.Split(imageName, ":")
+	if len(splitName) != 2 {
+		return "", fmt.Errorf("IMAGE_NAME must be formatted as NAME:VERSION and must contain only the seperating colon")
+	}
+	name := fmt.Sprintf("%s:%s", splitName[0], splitName[1])
+	fmt.Println(name)
+	return name, nil
 }
