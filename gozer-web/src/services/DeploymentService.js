@@ -67,7 +67,7 @@ function getDeploymentWithImageData(name) {
             return imagesService
               .getByVersion(containerName, containerVersion)
               .then(function (imageData) {
-                imageData.containerName = containerName;
+                imageData.containerName = container.name;
                 return imageData;
               })
           }
