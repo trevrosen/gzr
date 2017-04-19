@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"k8s.io/client-go/tools/clientcmd"
+
 	"github.com/bypasslane/gzr/comms"
 	"github.com/bypasslane/gzr/controllers"
 	"github.com/spf13/cobra"
@@ -18,6 +20,7 @@ gzr web
 gzr web --port=<CUSTOM_PORT_NUMBER>
 	`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		setNamespace()
 		var connErr error
 		k8sConn, connErr = comms.NewK8sConnection(namespace)
 		if connErr != nil {
@@ -45,5 +48,22 @@ func bindAndRun() {
 func init() {
 	RootCmd.AddCommand(webCmd)
 	webCmd.Flags().IntVarP(&webPort, "port", "p", 9393, "the port to run the Gozer web interface on")
-	webCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "namespace to look for Deployments in")
+	webCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "namespace to look for Deployments in")
+}
+
+// setNamespace checks the current context in k8's config if one has not been passed into
+// the command
+func setNamespace() {
+	cli, err := clientcmd.LoadFromFile(clientcmd.RecommendedHomeFile)
+	if err != nil {
+		er("Cannot load ~/.kube/config")
+	}
+	if namespace == "" { // If it's set from the flag, don't do anything
+		currentNamespace := cli.Contexts[cli.CurrentContext].Namespace
+		if currentNamespace != "" { // If it's set in the context, set it
+			namespace = currentNamespace
+		} else {
+			namespace = "default"
+		}
+	}
 }
