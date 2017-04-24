@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/bypasslane/gzr/comms"
@@ -27,8 +26,7 @@ deployments update <DEPLOYMENT_NAME> <CONTAINER_NAME> <IMAGE>
 		k8sConn, connErr = comms.NewK8sConnection(namespace)
 		if connErr != nil {
 			// TODO: figure out the Cobra way to handle this
-			msg := fmt.Sprintf("problem establishing k8s connection: %s", connErr)
-			er(msg)
+			erWithDetails(connErr, "problem establishing k8s connection")
 		}
 	},
 }
@@ -42,7 +40,7 @@ var deploymentsListCmd = &cobra.Command{
 deployments list
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listDeploymentsHandler(namespace)
+		listDeploymentsHandler()
 	},
 }
 
@@ -90,7 +88,7 @@ func updateDeploymentHandler(namespace string, deploymentName string, containerN
 	deployment, err := k8sConn.UpdateDeployment(dci)
 
 	if err != nil {
-		er(fmt.Sprintf("there was a problem updating container '%s' on deployment '%s' - %s", containerName, deploymentName, err))
+		erWithDetails(err, fmt.Sprintf("There was a problem updating container %q on deployment %q", containerName, deploymentName))
 	}
 	deployment.SerializeForCLI(os.Stdout)
 }
@@ -99,16 +97,16 @@ func updateDeploymentHandler(namespace string, deploymentName string, containerN
 func getDeploymentHandler(deploymentName string) {
 	deployment, err := k8sConn.GetDeployment(deploymentName)
 	if err != nil {
-		er(fmt.Sprintf("there was a problem retrieving deployment '%s'", deploymentName))
+		erWithDetails(err, fmt.Sprintf("There was a problem retrieving deployment %q", deploymentName))
 	}
 	deployment.SerializeForCLI(os.Stdout)
 }
 
 // listDeploymentsHandler fetches Deployments and prints them to the CLI
-func listDeploymentsHandler(namespace string) {
+func listDeploymentsHandler() {
 	dlist, err := k8sConn.ListDeployments()
 	if err != nil {
-		log.Fatalln("Error retrieving Deployments: %s", err)
+		erWithDetails(err, "Error retrieving deployments")
 	}
 	for _, deployment := range dlist.Deployments {
 		deployment.SerializeForCLI(os.Stdout)

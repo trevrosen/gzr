@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	"github.com/bradfitz/slice"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
 
@@ -23,44 +25,50 @@ type BoltStorage struct {
 // and returns a BoltStorage pointer with the established connection
 func NewBoltStorage() (GzrMetadataStore, error) {
 	dbPath := viper.GetString("datastore.db_path")
+	debugLog := log.WithFields(log.Fields{"path": dbPath})
+	defer debugLog.Debug("NewBoltStorage")
 	db, err := bolt.Open(dbPath, 0600, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Failed to open connection to bolt database")
 	}
 	store := &BoltStorage{db: db}
 	txn, err := store.db.Begin(true)
 	if err != nil {
 		store.Cleanup()
-		return nil, err
+		return nil, errors.Wrap(err, "Failed to start transaction in bolt database")
 	}
 	_, err = txn.CreateBucketIfNotExists([]byte(ImageBucket))
 	if err != nil {
 		store.Cleanup()
-		return nil, err
+		return nil, errors.Wrapf(err, "Failed to create bucket %q", ImageBucket)
 	}
 	err = txn.Commit()
 	if err != nil {
 		store.Cleanup()
-		return nil, err
+		return nil, errors.Wrap(err, "Failed to commit changes to bolt database")
 	}
+
 	return store, nil
 }
 
 // List queries the Bolt store for all images stored under a particular name
 func (store *BoltStorage) List(imageName string) (*ImageList, error) {
 	var images []*Image
+	debugLog := log.WithFields(log.Fields{"imageName": imageName})
+	defer debugLog.Debug("List")
 	err := store.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ImageBucket))
 		c := b.Cursor()
 		prefix := []byte(imageName)
 		for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+			debugLog = debugLog.WithField(string(k[:]), string(v[:]))
 			img := store.extractImage(v, k)
 			images = append(images, img)
 		}
 		return nil
 	})
 	if err != nil {
-		return &ImageList{}, err
+		return &ImageList{}, errors.Wrap(err, "Failed to retrieve image list from bolt database")
 	}
 	return &ImageList{Images: images}, nil
 }
@@ -70,15 +78,15 @@ func (store *BoltStorage) Store(imageName string, meta ImageMetadata) error {
 	b := store.activeTxn.Bucket([]byte(ImageBucket))
 	data, err := json.Marshal(meta)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Failed to convert metadata into json for image %q", imageName)
 	}
 	key, err := createKey(imageName)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Failed to create db key %q in bolt db", imageName)
 	}
 	err = b.Put([]byte(key), data)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Failed to store metadata for key %q in bolt db", imageName)
 	}
 	return nil
 }
@@ -94,10 +102,10 @@ func (store *BoltStorage) Delete(imageName string) (int, error) {
 	c := b.Cursor()
 	prefix := []byte(imageName)
 	deleted := 0
-	for k, _ := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, _ = c.Next() {
-		err := b.Delete(k)
+	for key, _ := c.Seek(prefix); key != nil && bytes.HasPrefix(key, prefix); key, _ = c.Next() {
+		err := b.Delete(key)
 		if err != nil {
-			return 0, err
+			return 0, errors.Wrapf(err, "Failed to delete key %q from bolt db", key)
 		}
 		deleted += 1
 	}
@@ -117,7 +125,7 @@ func (store *BoltStorage) Get(imageName string) (*Image, error) {
 		return nil
 	})
 	if err != nil {
-		return &Image{}, err
+		return &Image{}, errors.Wrapf(err, "Failed to get images for %q from bolt db", imageName)
 	}
 	return image, nil
 }
@@ -126,7 +134,7 @@ func (store *BoltStorage) Get(imageName string) (*Image, error) {
 func (store *BoltStorage) GetLatest(imageName string) (*Image, error) {
 	images, err := store.List(imageName)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "Unable to get images for %q", imageName)
 	}
 	slice.Sort(images.Images, func(i, j int) bool {
 		return images.Images[j].Meta.CreatedAt < images.Images[i].Meta.CreatedAt
@@ -138,7 +146,7 @@ func (store *BoltStorage) GetLatest(imageName string) (*Image, error) {
 func (store *BoltStorage) StartTransaction() error {
 	bTxn, err := store.db.Begin(true)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to create transaction")
 	}
 	store.activeTxn = bTxn
 	return nil

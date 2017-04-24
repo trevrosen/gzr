@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/bypasslane/gzr/comms"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -14,6 +16,9 @@ var namespace string
 
 // webPort is the port that the web interface will run on
 var webPort int
+
+var logLevel string
+var logFormat string
 
 // imageStore is the backing for image data storage
 var imageStore comms.GzrMetadataStore
@@ -26,7 +31,21 @@ var imageManager comms.ImageManager
 
 // er prints an error message and exits. Lifted from Cobra source.
 func er(msg interface{}) {
-	fmt.Println("Error:", msg)
+	log.Error(msg)
+	os.Exit(-1)
+}
+
+type stackTracer interface {
+	StackTrace() errors.StackTrace
+}
+
+// erWithDetails prints the error message and the stacktrace if it has one then exits. Should be restricted to CLI usage
+func erWithDetails(err error, msg interface{}) {
+	logEntry := log.WithField("error", err)
+	if err, ok := err.(stackTracer); ok {
+		logEntry = logEntry.WithField("stacktrace", fmt.Sprintf("%+v", err.(stackTracer).StackTrace()))
+	}
+	logEntry.Error(msg)
 	os.Exit(-1)
 }
 
@@ -60,7 +79,7 @@ func setupImageStore() {
 	}
 	newStore, err := storeCreator()
 	if err != nil {
-		er(fmt.Sprintf("%s", err.Error()))
+		erWithDetails(err, "Failed to initialize store")
 	}
 	imageStore = newStore
 }
