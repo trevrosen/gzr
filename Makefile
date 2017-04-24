@@ -17,7 +17,7 @@ build_web: build
 
 install_build_deps:
 	go get -u $(DEPEND)
-	go install $(DEPEND)
+
 watch_web:
 	cd gozer-web; npm run watch;
 

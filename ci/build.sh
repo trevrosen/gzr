@@ -5,7 +5,8 @@ set -eu
 source ~/.bash_profile
 
 pushd $GOPATH/src/github.com/bypasslane/gzr
-    make build
+    make install_build_deps
+    make build_web
 popd
 
 mkdir -p release

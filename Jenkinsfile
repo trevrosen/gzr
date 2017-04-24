@@ -2,13 +2,6 @@ node('default') {
   stage('Test CLI') {
     deleteDir()
     checkout scm
-    // won't need this key after repo is public
-    withCredentials([file(credentialsId: 'bypass-cicd-sshkey', variable: 'SSHKEY')]) {
-      sh 'sudo cp -u ${SSHKEY} /var/jenkins_home/.ssh/id_rsa'
-      sh 'sudo cp -u ${SSHKEY} gozer-web/id_rsa'
-      sh 'sudo chmod go-rwx /var/jenkins_home/.ssh/id_rsa && sudo chown jenkins: /var/jenkins_home/.ssh/id_rsa'
-      sh 'sudo chmod go-rwx gozer-web/id_rsa && sudo chown jenkins: gozer-web/id_rsa'
-    }
     sh './ci/test-cli.sh'
   }
   stage('Test Web') {
@@ -27,6 +20,6 @@ node('default') {
       sh 'cp -u ${DOCKERCFG} /var/jenkins_home/.dockercfg'
       sh 'chmod 600 /var/jenkins_home/.dockercfg'
     }
-    sh './ci/release-docker.sh'
+    sh './ci/build-docker.sh'
   }
 }
