@@ -10,6 +10,5 @@ RUN apk update && \
     git config --global url."https://".insteadOf ssh:// && \
     git config --global url."https://github.com/".insteadOf git@github.com: && \
     go get github.com/Masterminds/glide && \
-    make install_deps && \
     make install_build_deps && \
     make build_web
