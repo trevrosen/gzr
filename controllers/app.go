@@ -14,7 +14,13 @@ import (
 	"github.com/urfave/negroni"
 )
 
-func App(k8sConn comms.K8sCommunicator, imageStore comms.GzrMetadataStore) http.Handler {
+//Allows for dependency injection of rice.Config,
+// preventing errors during tests when a public folder isn't found
+type staticFileBoxConfig interface {
+	MustFindBox(boxName string)(*rice.Box)
+}
+
+func App(k8sConn comms.K8sCommunicator, imageStore comms.GzrMetadataStore, riceConfig staticFileBoxConfig) http.Handler {
 	router := mux.NewRouter().StrictSlash(true).UseEncodedPath()
 
 	router.HandleFunc("/", homeHandler).Methods("GET")
@@ -32,10 +38,7 @@ func App(k8sConn comms.K8sCommunicator, imageStore comms.GzrMetadataStore) http.
 
 	loggerMiddleware := negronilogrus.NewMiddlewareFromLogger(log.StandardLogger(), "web")
 
-	conf := rice.Config{
-		LocateOrder: []rice.LocateMethod{rice.LocateAppended, rice.LocateFS},
-	}
-	static := negroni.NewStatic(conf.MustFindBox("../public").HTTPBox())
+	static := negroni.NewStatic(riceConfig.MustFindBox("../public").HTTPBox())
 	jsonHeader := middleware.NewContentType()
 
 	n := negroni.New(recovery, loggerMiddleware, static, jsonHeader)
