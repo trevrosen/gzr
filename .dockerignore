@@ -1,0 +1,6 @@
+node_modules/
+**/.idea/
+gozer-web/node_modules/
+vendor/
+public/
+Jenkinsfile
