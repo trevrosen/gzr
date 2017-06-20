@@ -1,25 +1,32 @@
 package: github.com/bypasslane/gzr
 import:
 - package: github.com/spf13/cobra
+  version: 9c28e4bbd74e5c3ed7aacbc552b2cab7cfdfe744
 - package: github.com/spf13/viper
+  version: 16990631d4aa7e38f73dbbbf37fa13e67c648531
 - package: k8s.io/client-go
-  version: release-2.0
+  version: fc49675c2251223623d1a03df9faf0a204ba4752
 - package: github.com/gorilla/mux
-  version: ^1.3.0
+  version: bcd8bc72b08df0f70df986b97f95590779502d31
 - package: github.com/urfave/negroni
   version: c0db5feaa33826cd5117930c8f4ee5c0f565eec6
 - package: github.com/coreos/etcd
-  version: ~3.1.0
+  version: 20490caaf0dcd96bb4a95e40625559def8ef5b04
 - package: github.com/boltdb/bolt
-  version: ~1.3.0
+  version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - package: github.com/bradfitz/slice
+  version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
 - package: go4.org
+  version: 169ea6cabe2a4888dba958edaecc9e9751adc711
   subpackages:
   - reflectutil
 - package: github.com/Sirupsen/logrus
-  version: ^0.11.5
+  version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
 - package: github.com/spf13/pflag
+  version: 6fd2ff4ff8dfcdf5556fbdc0ac0284408274b1a7
 - package: github.com/meatballhat/negroni-logrus
+  version: 7c570a907cfc69cdc004ad506c6f5e234815b936
 - package: github.com/pkg/errors
-  version: ^0.8.0
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - package: github.com/bypasslane/boxedRice
+  version: afa5b43c764a5c3d3b3cc2303946d7001458f78f
