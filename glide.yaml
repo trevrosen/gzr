@@ -29,4 +29,4 @@ import:
 - package: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - package: github.com/bypasslane/boxedRice
-  version: 42fdac74fb18033d38da902d9d6a0d6dba5179ee
+  version: af9beabff7eebd726c0106cd911149dc6ca7a3b0
