@@ -1,7 +1,7 @@
 .PHONY: build clean doc gen run test vet install_deps build_web vendor_install
 
 DEPEND=\
-		github.com/GeertJohan/go.rice/rice
+		github.com/bypasslane/boxedRice/boxedRice
 
 
 excluding_vendor := $(shell go list ./... | grep -v /vendor/)
@@ -13,7 +13,7 @@ build:
 
 build_web: build
 	cd gozer-web; npm i -g webpack; npm i; npm run build;
-	rice -i=github.com/bypasslane/gzr/controllers append --exec=./gzr
+	boxedRice append -b=public --exec=./gzr
 
 install_build_deps:
 	go get -u $(DEPEND)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/GeertJohan/go.rice"
+	"github.com/bypasslane/boxedRice"
 	log "github.com/Sirupsen/logrus"
 	"github.com/bypasslane/gzr/comms"
 	"github.com/bypasslane/gzr/middleware"
@@ -14,13 +14,13 @@ import (
 	"github.com/urfave/negroni"
 )
 
-//Allows for dependency injection of rice.Config,
+//Allows for dependency injection of boxedRice.Config,
 // preventing errors during tests when a public folder isn't found
 type staticFileBoxConfig interface {
-	MustFindBox(boxName string)(*rice.Box)
+	MustFindBox(boxName string)(*boxedRice.Box)
 }
 
-func App(k8sConn comms.K8sCommunicator, imageStore comms.GzrMetadataStore, riceConfig staticFileBoxConfig) http.Handler {
+func App(k8sConn comms.K8sCommunicator, imageStore comms.GzrMetadataStore, boxedRiceConfig staticFileBoxConfig) http.Handler {
 	router := mux.NewRouter().StrictSlash(true).UseEncodedPath()
 
 	router.HandleFunc("/", homeHandler).Methods("GET")
@@ -38,7 +38,7 @@ func App(k8sConn comms.K8sCommunicator, imageStore comms.GzrMetadataStore, riceC
 
 	loggerMiddleware := negronilogrus.NewMiddlewareFromLogger(log.StandardLogger(), "web")
 
-	static := negroni.NewStatic(riceConfig.MustFindBox("../public").HTTPBox())
+	static := negroni.NewStatic(boxedRiceConfig.MustFindBox("../public").HTTPBox())
 	jsonHeader := middleware.NewContentType()
 
 	n := negroni.New(recovery, loggerMiddleware, static, jsonHeader)

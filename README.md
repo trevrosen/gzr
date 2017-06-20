@@ -42,7 +42,7 @@ We needed an easy way to manage deployments in a variety of contexts, thinking i
 
 ### Dependencies
 * Node version > 4
-* rice
+* boxedRice
 * zip
 * git
 * go
@@ -52,7 +52,7 @@ We needed an easy way to manage deployments in a variety of contexts, thinking i
 ### Structure
 `gzr` is a CLI tool written with Cobra. It has a `web` 
 command that stands up a web UI based on [Gorilla](http://www.gorillatoolkit.org), [Negroni](https://github.com/urfave/negroni), 
-[Rice](https://github.com/GeertJohan/go.rice), [Twitter Bootstrap](http://getbootstrap.com), and [Vue.js](https://vuejs.org/). 
+[boxedRice](https://github.com/bypasslane/boxedRice), [Twitter Bootstrap](http://getbootstrap.com), and [Vue.js](https://vuejs.org/). 
 The web handlers and CLI handlers both use the same `comms` package to talk to k8s and storage backends.
 
 ### Example configs and data
@@ -62,8 +62,8 @@ Your config file should be stored in $HOME/.gzr.json. If you are using the BoltD
 
 ### Make commands
 * `make` and `make build` - builds gzr executable
-* `make build_web` - builds web assets and uses rice tool to append them to executable
-* `make install_build_deps` - installs rice cli tool
+* `make build_web` - builds web assets and uses boxedRice tool to append them to executable
+* `make install_build_deps` - installs boxedRice cli tool
 
 ### Project folders
 
