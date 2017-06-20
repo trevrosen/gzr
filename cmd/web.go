@@ -50,7 +50,7 @@ func bindAndRun() {
 	portString := fmt.Sprintf(":%v", webPort)
 	fmt.Printf("[-] Listening on %v\n", portString)
 	boxedRiceConfig := &boxedRice.Config{
-		LocateOrder: []boxedRice.LocateMethod{boxedRice.LocateAppended, boxedRice.LocateFS},
+		LocateOrder: []boxedRice.LocateMethod{boxedRice.LocateAppended, boxedRice.LocateWorkingDirectory},
 	}
 	http.ListenAndServe(portString, controllers.App(k8sConn, imageStore, boxedRiceConfig))
 }

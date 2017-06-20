@@ -38,7 +38,7 @@ func App(k8sConn comms.K8sCommunicator, imageStore comms.GzrMetadataStore, boxed
 
 	loggerMiddleware := negronilogrus.NewMiddlewareFromLogger(log.StandardLogger(), "web")
 
-	static := negroni.NewStatic(boxedRiceConfig.MustFindBox("../public").HTTPBox())
+	static := negroni.NewStatic(boxedRiceConfig.MustFindBox("public").HTTPBox())
 	jsonHeader := middleware.NewContentType()
 
 	n := negroni.New(recovery, loggerMiddleware, static, jsonHeader)
