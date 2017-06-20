@@ -1,4 +1,4 @@
-hash: 9dd13c23e7b06069c63885f3f1a0df199853d559301f32ec5f2b89c7d13de1d1
+hash: 095454b169ff336c1ea0e3a1183198b7a88b514b90617081aa393a048b938796
 updated: 2017-06-20T14:00:28.611782562-05:00
 imports:
 - name: cloud.google.com/go
@@ -17,7 +17,7 @@ imports:
 - name: github.com/bradfitz/slice
   version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
 - name: github.com/bypasslane/boxedRice
-  version: afa5b43c764a5c3d3b3cc2303946d7001458f78f
+  version: 42fdac74fb18033d38da902d9d6a0d6dba5179ee
 - name: github.com/coreos/etcd
   version: 20490caaf0dcd96bb4a95e40625559def8ef5b04
   subpackages:
