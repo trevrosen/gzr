@@ -10,7 +10,7 @@ import (
 	"github.com/bypasslane/gzr/comms"
 	"github.com/bypasslane/gzr/controllers"
 	"github.com/spf13/cobra"
-	"github.com/GeertJohan/go.rice"
+	"github.com/bypasslane/boxedRice"
 )
 const DefaultWebLogFormat = "json"
 
@@ -49,10 +49,10 @@ gzr web --port=<CUSTOM_PORT_NUMBER>
 func bindAndRun() {
 	portString := fmt.Sprintf(":%v", webPort)
 	fmt.Printf("[-] Listening on %v\n", portString)
-	riceConfig := &rice.Config{
-		LocateOrder: []rice.LocateMethod{rice.LocateAppended, rice.LocateFS},
+	boxedRiceConfig := &boxedRice.Config{
+		LocateOrder: []boxedRice.LocateMethod{boxedRice.LocateAppended, boxedRice.LocateWorkingDirectory},
 	}
-	http.ListenAndServe(portString, controllers.App(k8sConn, imageStore, riceConfig))
+	http.ListenAndServe(portString, controllers.App(k8sConn, imageStore, boxedRiceConfig))
 }
 
 func init() {

@@ -1,5 +1,5 @@
-hash: 392ced404e3d7732f1da3029620b274b6310040e5092d30eb3b702340f2d4e70
-updated: 2017-04-18T14:14:58.459246103-05:00
+hash: 371d49c5e79470f7df76ebc48f38236972397175a22cc8f013ff04e5c3c05a3b
+updated: 2017-06-20T14:00:28.611782562-05:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -16,6 +16,8 @@ imports:
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - name: github.com/bradfitz/slice
   version: d9036e2120b5ddfa53f3ebccd618c4af275f47da
+- name: github.com/bypasslane/boxedRice
+  version: af9beabff7eebd726c0106cd911149dc6ca7a3b0
 - name: github.com/coreos/etcd
   version: 20490caaf0dcd96bb4a95e40625559def8ef5b04
   subpackages:
@@ -58,10 +60,6 @@ imports:
   - swagger
 - name: github.com/fsnotify/fsnotify
   version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
-- name: github.com/GeertJohan/go.rice
-  version: fbe422beac33c4443570d39dccb4b0c4c914d6ca
-  subpackages:
-  - embedded
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-openapi/jsonpointer
