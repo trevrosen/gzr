@@ -10,8 +10,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -98,7 +98,7 @@ func NewK8sConnection(namespace string) (*K8sConnection, error) {
 // GetDeployment returns a GzrDeployment matching the deploymentName in the given namespace
 func (k *K8sConnection) GetDeployment(deploymentName string) (*GzrDeployment, error) {
 	var gd *GzrDeployment
-	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(k.GetNamespace()).Get(deploymentName)
+	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(k.GetNamespace()).Get(deploymentName, v1.GetOptions{})
 	if err != nil {
 		return gd, errors.Wrapf(err, "Failed to get deployment %q in namespace %q", deployment, k.GetNamespace())
 	}
@@ -121,7 +121,7 @@ func (k *K8sConnection) UpdateDeployment(dci *DeploymentContainerInfo) (*GzrDepl
 	var containerIndex int
 	found := false
 
-	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(k.namespace).Get(dci.DeploymentName)
+	deployment, err := k.clientset.ExtensionsV1beta1().Deployments(k.namespace).Get(dci.DeploymentName, v1.GetOptions{})
 	// no Name in ObjectMeta means it was returned empty
 	if deployment.ObjectMeta.Name == "" {
 		return gd, errors.WithStack(ErrDeploymentNotFound)
