@@ -73,7 +73,7 @@ func getDeploymentHandler(k8sConn comms.K8sCommunicator) http.HandlerFunc {
 		jsonData, err := deployment.SerializeForWire()
 
 		if err != nil {
-			logErrorFields(err).Error("Error serializng for wire")
+			logErrorFields(err).Error("Error serializing for wire")
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
