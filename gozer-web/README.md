@@ -31,6 +31,3 @@ npm test
 ```
 
 For detailed explanation on how things work, checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
-
-
-Sad stay puft image from https://www.etsy.com/people/Sugarfueledart - (needs to be redone before public to avoid copyright and trademark problems)
