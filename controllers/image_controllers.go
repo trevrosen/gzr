@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"net/url"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/bypasslane/gzr/comms"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 )
 
 func getImagesHandler(imageStore comms.GzrMetadataStore) http.HandlerFunc {

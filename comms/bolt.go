@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	"github.com/bradfitz/slice"
 	"github.com/pkg/errors"

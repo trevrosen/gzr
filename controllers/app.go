@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/bypasslane/boxedRice"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/bypasslane/gzr/comms"
 	"github.com/bypasslane/gzr/middleware"
 	"github.com/gorilla/mux"
